@@ -28,6 +28,8 @@ export type SimulationConfig = {
   n: number;
   stratifyBy: StratifierId;
   confidence: Confianca;
+  /** Variable whose Sh drives a Neyman allocation. Defaults to the variable being estimated. */
+  allocationVariable?: VariableId;
 };
 
 /** Unit indices drawn from `units`, grouped by stratum (a single group outside AES). */
@@ -109,7 +111,7 @@ export const prepareSimulation = (motor: MotorAmostragem, units: Consumer[], con
 
   const sample = plan.sample;
   const estimate = plan.estimate;
-  return { N, n, truth, variable: v, strata, stratumOf, sample, estimate, describe };
+  return { N, n, truth, variable: v, strata, stratumOf, sample, estimate, describe, variance: plan.variance };
 };
 
 export type PreparedSimulation = ReturnType<typeof prepareSimulation>;
@@ -124,6 +126,8 @@ export type RepetitionSummary = {
   meanEstimate: number;
   /** Variance of the estimates across repetitions: the empirical sampling variance. */
   empiricalVariance: number;
+  /** Average half-width of the intervals. */
+  meanMargin: number;
 };
 
 /** Draws `times` independent samples to show the sampling distribution of the estimator. */
@@ -137,6 +141,7 @@ export const repeat = (prepared: PreparedSimulation, times: number, seed: number
     coverage: results.filter((r) => r.ic[0] <= prepared.truth && prepared.truth <= r.ic[1]).length / times,
     meanEstimate,
     empiricalVariance: estimates.reduce((acc, e) => acc + (e - meanEstimate) ** 2, 0) / (times - 1),
+    meanMargin: mean(results.map((r) => r.margem)),
   };
 };
 
@@ -158,14 +163,23 @@ type Plan = {
   /** `group` is the stratum index for AES, 0 otherwise. */
   inclusion: (unit: number, group: number) => SampledUnit;
   systematic?: (draw: Draw) => NonNullable<SimulationResult["systematic"]>;
+  /**
+   * Exact mean squared error of the design's estimator around the true mean,
+   * from the whole frame. A population quantity, not an estimate: it is only
+   * known because the frame is synthetic, and it ranks designs without the
+   * noise of a finite number of repetitions.
+   */
+  variance: number;
 };
 
-const stratifiedPlan = ({ motor, y, strata, n, config }: PlanContext): Plan => {
+const stratifiedPlan = ({ motor, units, y, strata, n, config }: PlanContext): Plan => {
   const sizes = strata.map((s) => s.units.length);
   // Neyman needs Sh. A real study would take it from a previous wave or a pilot;
   // here it comes from the frame, which the simulator is allowed to see.
+  const allocationValue = config.allocationVariable && variable(config.allocationVariable).value;
+  const allocationY = (u: number) => (allocationValue ? allocationValue(units[u]) : y[u]);
   const allocation = motor.aes.alocar(
-    strata.map((s) => ({ Nh: s.units.length, Sh: populationSd(s.units.map((u) => y[u])) })),
+    strata.map((s) => ({ Nh: s.units.length, Sh: populationSd(s.units.map(allocationY)) })),
     n,
     config.design.slice(4) as RegraAlocacao,
   );
@@ -182,6 +196,10 @@ const stratifiedPlan = ({ motor, y, strata, n, config }: PlanContext): Plan => {
       const pi = allocation[h] / sizes[h];
       return { unit, stratum: h, pi, weight: 1 / pi };
     },
+    variance: strata.reduce((acc, s, h) => {
+      const Wh = sizes[h] / units.length;
+      return acc + Wh ** 2 * (1 / allocation[h] - 1 / sizes[h]) * populationSd(s.units.map((u) => y[u])) ** 2;
+    }, 0),
   };
 };
 
@@ -201,6 +219,10 @@ const systematicPlan = ({ motor, units, y, stratumOf, N, n, config }: PlanContex
     },
     estimate: (draw) => motor.as.estimarMedia(values(draw), listSize, config.confidence, "v1"),
     inclusion: (unit) => ({ unit, stratum: stratumOf[unit], pi, weight: 1 / pi }),
+    // Only k samples are possible (one per start r), so the exact error averages over all of them.
+    variance: mean(
+      Array.from({ length: k }, (_, r) => (mean(Array.from({ length: n }, (_, j) => y[ordered[r + j * k]])) - mean(y)) ** 2),
+    ),
     systematic: (draw) => ({
       start: draw.start ?? 1,
       k,
@@ -211,6 +233,7 @@ const systematicPlan = ({ motor, units, y, stratumOf, N, n, config }: PlanContex
 };
 
 const simpleRandomPlan = ({ motor, y, stratumOf, N, n, config }: PlanContext): Plan => {
+  const S2 = populationSd(Array.from(y)) ** 2;
   const pi = motor.aas.probInclusao(N, n);
   const isProportion = variable(config.variable).kind === "proportion";
   return {
@@ -222,6 +245,7 @@ const simpleRandomPlan = ({ motor, y, stratumOf, N, n, config }: PlanContext): P
         : motor.aas.estimarMedia(values, N, config.confidence);
     },
     inclusion: (unit) => ({ unit, stratum: stratumOf[unit], pi, weight: 1 / pi }),
+    variance: (1 / n - 1 / N) * S2,
   };
 };
 

@@ -4,42 +4,80 @@ import { geoMercator, geoPath, type GeoProjection } from "d3-geo";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { feature, mesh } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
-import { MUNICIPALITIES } from "@/data/geography";
+import { MUNICIPALITIES, type Municipality } from "@/data/geography";
 import type { Consumer } from "@/data/population";
-import { brl, int } from "@/lib/format";
+import { STORE_TYPES, STORES, type StoreType } from "@/data/stores";
+import { brl, int, pct } from "@/lib/format";
 
-export const STRATUM_COLORS = ["#0a7c5a", "#2f6fde", "#e2873a", "#9a4fc4", "#d64575", "#1f9fb4"];
+export const STRATUM_COLORS = ["#0a7c5a", "#2f6fde", "#e2873a", "#9a4fc4", "#d64575", "#1f9fb4", "#a07a10", "#5b6b7f"];
 
 export type SampledPoint = { unit: number; stratum: number; weight: number };
-export type Basemap = "renda" | "nenhum";
+export type Basemap = "renda" | "agro" | "rural" | "nenhum";
 
-type Mesh = Topology<{ BRMU: GeometryCollection<{ codarea: string }> }>;
+export const STORE_COLORS: Record<StoreType, string> = { atacarejo: "#b4441b", supermercado: "#0b1f33", mercadinho: "#7a8aa0" };
+
+type Mesh = Topology<{ [name: string]: GeometryCollection<{ codarea: string }> }>;
 /** screen = base · k + (x, y), where base is the fitted projection. */
 type Zoom = { k: number; x: number; y: number };
 type View = { width: number; height: number; projection: GeoProjection };
-type MunicipalityShape = { code: number; path: Path2D; bounds: [[number, number], [number, number]]; fill: string };
+type MunicipalityShape = { code: number; path: Path2D; bounds: [[number, number], [number, number]] };
 
 const IDENTITY: Zoom = { k: 1, x: 0, y: 0 };
 const MAX_ZOOM = 80;
 const ANIMATION_MS = 450;
 
-// GDP per capita by IBGE code, for the choropleth.
 const MUNICIPALITY_BY_CODE = new Map(MUNICIPALITIES.map((m, i) => [m.code, i]));
-const GDP_SORTED = MUNICIPALITIES.map((m) => m.gdpPerCapita).sort((a, b) => a - b);
-const GDP_BREAKS = [0.2, 0.4, 0.6, 0.8].map((q) => GDP_SORTED[Math.floor(q * GDP_SORTED.length)]);
-const GDP_FILLS = ["#f3f6f9", "#e6edf3", "#d4e0ea", "#bccfdd", "#9fb8cc"];
 
-const gdpFill = (code: number) => {
+// Choropleth backgrounds from IBGE data, in municipal quintiles.
+const METRICS: Record<Exclude<Basemap, "nenhum">, { label: string; value: (m: Municipality) => number; format: (v: number) => string; fills: string[] }> = {
+  renda: { label: "PIB per capita", value: (m) => m.gdpPerCapita, format: (v) => brl(v), fills: ["#f3f6f9", "#e6edf3", "#d4e0ea", "#bccfdd", "#9fb8cc"] },
+  agro: { label: "Peso da agropecuária no PIB", value: (m) => m.agroShare, format: (v) => pct(v, 0), fills: ["#f6f7f1", "#eaeedb", "#d9e2bd", "#c3d29a", "#a8bd74"] },
+  rural: { label: "População rural", value: (m) => m.ruralShare, format: (v) => pct(v, 0), fills: ["#f8f5f1", "#efe6da", "#e3d3bd", "#d4bc9b", "#c1a179"] },
+};
+const NO_FILL = "#f3f6f9";
+
+const breaksOf = (basemap: Exclude<Basemap, "nenhum">) => {
+  const sorted = MUNICIPALITIES.map(METRICS[basemap].value).sort((a, b) => a - b);
+  return [0.2, 0.4, 0.6, 0.8].map((q) => sorted[Math.floor(q * sorted.length)]);
+};
+const BREAKS = Object.fromEntries(Object.keys(METRICS).map((k) => [k, breaksOf(k as Exclude<Basemap, "nenhum">)])) as Record<Exclude<Basemap, "nenhum">, number[]>;
+
+const fillFor = (basemap: Basemap, code: number) => {
   const index = MUNICIPALITY_BY_CODE.get(code);
-  const value = index === undefined ? 0 : MUNICIPALITIES[index].gdpPerCapita;
-  return GDP_FILLS[GDP_BREAKS.filter((b) => value >= b).length];
+  if (basemap === "nenhum" || index === undefined) return NO_FILL;
+  const value = METRICS[basemap].value(MUNICIPALITIES[index]);
+  return METRICS[basemap].fills[BREAKS[basemap].filter((b) => value >= b).length];
 };
 
-// The first two digits of an IBGE municipality code are its state code.
-const ufOf = (geometry: { properties?: unknown }) => (geometry.properties as { codarea: string }).codarea.slice(0, 2);
+export const BASEMAP_LABELS: Record<Basemap, string> = {
+  renda: "PIB per capita",
+  agro: "Agropecuária",
+  rural: "População rural",
+  nenhum: "Sem fundo",
+};
+
+/** Legend rows for a background: color and the value range of each quintile. */
+export const basemapLegend = (basemap: Basemap) => {
+  if (basemap === "nenhum") return null;
+  const metric = METRICS[basemap];
+  const breaks = BREAKS[basemap];
+  return {
+    title: metric.label,
+    rows: metric.fills.map((color, i) => ({
+      color,
+      label: i === 0 ? `até ${metric.format(breaks[0])}` : i === 4 ? `${metric.format(breaks[3])} ou mais` : `${metric.format(breaks[i - 1])} a ${metric.format(breaks[i])}`,
+    })),
+  };
+};
+
+// Borders between IBGE intermediate regions are drawn thicker than municipal ones.
+const regionOf = (geometry: { properties?: unknown }) => {
+  const index = MUNICIPALITY_BY_CODE.get(Number((geometry.properties as { codarea: string }).codarea));
+  return index === undefined ? "" : MUNICIPALITIES[index].region;
+};
 
 let meshPromise: Promise<Mesh> | undefined;
-const loadMesh = () => (meshPromise ??= fetch("/geo/br-municipios.topo.json").then((r) => r.json() as Promise<Mesh>));
+const loadMesh = () => (meshPromise ??= fetch("/geo/rs-municipios.topo.json").then((r) => r.json() as Promise<Mesh>));
 
 const clampZoom = (zoom: Zoom, view: View): Zoom => {
   const k = Math.min(MAX_ZOOM, Math.max(1, zoom.k));
@@ -65,12 +103,17 @@ export function BrazilCanvas({
   units,
   sample,
   basemap,
+  showStores,
   onHover,
+  sampleColor,
 }: {
   units: Consumer[];
   sample: SampledPoint[];
   basemap: Basemap;
+  showStores: boolean;
   onHover: (hit: { point: SampledPoint; x: number; y: number } | null) => void;
+  /** One color and one size for every sampled dot, instead of stratum colors and weight-sized dots. */
+  sampleColor?: string;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const baseRef = useRef<HTMLCanvasElement>(null);
@@ -79,6 +122,7 @@ export function BrazilCanvas({
   const [view, setView] = useState<View | null>(null);
   const [zoom, setZoom] = useState<Zoom>(IDENTITY);
   const [focus, setFocus] = useState<number | null>(null);
+  const [hoveredStore, setHoveredStore] = useState<{ index: number; x: number; y: number } | null>(null);
   // Event handlers and animation frames read the latest zoom from here, not from a stale closure.
   const zoomRef = useRef(zoom);
   const animationRef = useRef(0);
@@ -94,10 +138,11 @@ export function BrazilCanvas({
 
   const shapes = useMemo(() => {
     if (!topology) return null;
+    const municipalities = topology.objects[Object.keys(topology.objects)[0]];
     return {
-      municipalities: feature(topology, topology.objects.BRMU),
-      states: mesh(topology, topology.objects.BRMU, (a, b) => ufOf(a) !== ufOf(b)),
-      outline: mesh(topology, topology.objects.BRMU, (a, b) => a === b),
+      municipalities: feature(topology, municipalities),
+      regions: mesh(topology, municipalities, (a, b) => regionOf(a) !== regionOf(b)),
+      outline: mesh(topology, municipalities, (a, b) => a === b),
     };
   }, [topology]);
 
@@ -128,16 +173,17 @@ export function BrazilCanvas({
     const toPath = geoPath(view.projection);
     const municipalities: MunicipalityShape[] = shapes.municipalities.features.map((f) => {
       const code = Number(f.properties.codarea);
-      return { code, path: new Path2D(toPath(f) ?? ""), bounds: toPath.bounds(f), fill: gdpFill(code) };
+      return { code, path: new Path2D(toPath(f) ?? ""), bounds: toPath.bounds(f) };
     });
     return {
       municipalities,
-      states: new Path2D(toPath(shapes.states) ?? ""),
+      regions: new Path2D(toPath(shapes.regions) ?? ""),
       outline: new Path2D(toPath(shapes.outline) ?? ""),
     };
   }, [view, shapes]);
 
   const projected = useMemo(() => (view ? units.map((c) => view.projection([c.lon, c.lat])!) : []), [units, view]);
+  const projectedStores = useMemo(() => (view ? STORES.map((s) => view.projection([s.lon, s.lat])!) : []), [view]);
   const toScreen = (i: number) => [projected[i][0] * zoom.k + zoom.x, projected[i][1] * zoom.k + zoom.y] as const;
 
   // Base layer: municipalities, borders, and the whole frame.
@@ -147,7 +193,7 @@ export function BrazilCanvas({
     const context = prepareCanvas(baseRef.current!, view);
     context.setTransform(ratio * zoom.k, 0, 0, ratio * zoom.k, ratio * zoom.x, ratio * zoom.y);
     paths.municipalities.forEach((m) => {
-      context.fillStyle = basemap === "renda" ? m.fill : "#f3f6f9";
+      context.fillStyle = fillFor(basemap, m.code);
       context.fill(m.path);
     });
     // Municipal borders only help once the map is zoomed in.
@@ -158,7 +204,7 @@ export function BrazilCanvas({
     }
     context.strokeStyle = "#ffffff";
     context.lineWidth = 1.2 / zoom.k;
-    context.stroke(paths.states);
+    context.stroke(paths.regions);
     context.strokeStyle = "#9fb0c2";
     context.lineWidth = 0.8 / zoom.k;
     context.stroke(paths.outline);
@@ -191,8 +237,9 @@ export function BrazilCanvas({
       const y = projected[s.unit][1] * zoom.k + zoom.y;
       if (x < -20 || y < -20 || x > view.width + 20 || y > view.height + 20) return;
       context.beginPath();
-      context.arc(x, y, Math.min(2.6 * Math.sqrt(s.weight / minWeight), 10) * grow, 0, Math.PI * 2);
-      context.fillStyle = STRATUM_COLORS[s.stratum % STRATUM_COLORS.length];
+      const radius = sampleColor ? 2.6 : Math.min(2.6 * Math.sqrt(s.weight / minWeight), 10);
+      context.arc(x, y, Math.min(radius * grow, 14), 0, Math.PI * 2);
+      context.fillStyle = sampleColor ?? STRATUM_COLORS[s.stratum % STRATUM_COLORS.length];
       context.globalAlpha = 0.8;
       context.fill();
       context.globalAlpha = 1;
@@ -200,7 +247,20 @@ export function BrazilCanvas({
       context.lineWidth = 0.6;
       context.stroke();
     });
-  }, [view, sample, projected, zoom]);
+    if (showStores) {
+      const size = 3 + Math.log2(zoom.k) * 0.9;
+      projectedStores.forEach(([bx, by], i) => {
+        const x = bx * zoom.k + zoom.x;
+        const y = by * zoom.k + zoom.y;
+        if (x < 0 || y < 0 || x > view.width || y > view.height) return;
+        context.fillStyle = STORE_COLORS[STORES[i].type];
+        context.strokeStyle = "#ffffff";
+        context.lineWidth = 0.8;
+        context.fillRect(x - size / 2, y - size / 2, size, size);
+        context.strokeRect(x - size / 2, y - size / 2, size, size);
+      });
+    }
+  }, [view, sample, projected, zoom, showStores, projectedStores, sampleColor]);
 
   const animateTo = (target: Zoom) => {
     if (!view) return;
@@ -297,6 +357,17 @@ export function BrazilCanvas({
       }
     });
     onHover(best ? { point: best, x, y } : null);
+    if (best || !showStores) return setHoveredStore(null);
+    let bestStore = -1;
+    let bestStoreDistance = 49;
+    projectedStores.forEach(([bx, by], i) => {
+      const distance = (bx * zoom.k + zoom.x - x) ** 2 + (by * zoom.k + zoom.y - y) ** 2;
+      if (distance < bestStoreDistance) {
+        bestStoreDistance = distance;
+        bestStore = i;
+      }
+    });
+    setHoveredStore(bestStore >= 0 ? { index: bestStore, x, y } : null);
   };
 
   const handlePointerUp = (event: React.PointerEvent) => {
@@ -334,7 +405,10 @@ export function BrazilCanvas({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerLeave={() => onHover(null)}
+      onPointerLeave={() => {
+        onHover(null);
+        setHoveredStore(null);
+      }}
     >
       {!topology && (
         <div className="absolute inset-0 flex items-center justify-center text-[13px] text-muted">
@@ -342,7 +416,17 @@ export function BrazilCanvas({
         </div>
       )}
       <canvas ref={baseRef} className="absolute inset-0 h-full w-full" />
-      <canvas ref={dotsRef} className="absolute inset-0 h-full w-full" role="img" aria-label="Mapa do Brasil com os consumidores sorteados" />
+      <canvas ref={dotsRef} className="absolute inset-0 h-full w-full" role="img" aria-label="Mapa do Rio Grande do Sul com os consumidores sorteados" />
+
+      {hoveredStore && (
+        <div
+          className="pointer-events-none absolute z-10 rounded-md border border-line bg-white px-2.5 py-1.5 text-[12px] shadow-md"
+          style={{ left: hoveredStore.x + 12, top: hoveredStore.y + 12 }}
+        >
+          <div className="font-medium">{STORES[hoveredStore.index].name}</div>
+          <div className="text-muted">{STORE_TYPES[STORES[hoveredStore.index].type]} · OpenStreetMap</div>
+        </div>
+      )}
 
       <div className="absolute top-4 right-4 flex flex-col overflow-hidden rounded-lg border border-line bg-white shadow-sm" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
         <ZoomButton label="Aproximar" onClick={() => zoomBy(2)}>
@@ -351,7 +435,7 @@ export function BrazilCanvas({
         <ZoomButton label="Afastar" onClick={() => zoomBy(0.5)}>
           −
         </ZoomButton>
-        <ZoomButton label="Ver o Brasil inteiro" onClick={reset} disabled={zoom.k === 1}>
+        <ZoomButton label="Ver o estado inteiro" onClick={reset} disabled={zoom.k === 1}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
           </svg>
@@ -368,20 +452,28 @@ export function BrazilCanvas({
             <div>
               <div className="text-[14px] font-medium text-ink">{focusStats.municipality.name}</div>
               <div className="text-muted">
-                {focusStats.municipality.uf} · {int(focusStats.municipality.population)} hab. (Censo 2022)
+                {focusStats.municipality.regionName} · {int(focusStats.municipality.population)} hab. (Censo 2022)
               </div>
             </div>
-            <button onClick={reset} className="text-muted hover:text-ink" aria-label="Fechar e voltar ao Brasil">
+            <button onClick={reset} className="text-muted hover:text-ink" aria-label="Fechar e voltar ao estado">
               ✕
             </button>
           </div>
           <dl className="tabular mt-2 grid grid-cols-2 gap-y-0.5">
             <dt className="text-muted">PIB per capita</dt>
             <dd className="text-right">{brl(focusStats.municipality.gdpPerCapita)}</dd>
-            <dt className="text-muted">Na população-alvo</dt>
-            <dd className="text-right">{int(focusStats.inFrame)}</dd>
-            <dt className="text-muted">Sorteados</dt>
-            <dd className="text-right font-medium">{int(focusStats.inSample)}</dd>
+            <dt className="text-muted">Agropecuária no PIB</dt>
+            <dd className="text-right">{pct(focusStats.municipality.agroShare, 0)}</dd>
+            <dt className="text-muted">População rural</dt>
+            <dd className="text-right">{pct(focusStats.municipality.ruralShare, 0)}</dd>
+            {units.length > 0 && (
+              <>
+                <dt className="text-muted">Usuários do app</dt>
+                <dd className="text-right">{int(focusStats.inFrame)}</dd>
+                <dt className="text-muted">Sorteados</dt>
+                <dd className="text-right font-medium">{int(focusStats.inSample)}</dd>
+              </>
+            )}
           </dl>
         </div>
       ) : (

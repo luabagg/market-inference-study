@@ -1,5 +1,5 @@
-import { SamplingMap } from "@/components/app/sampling-map";
+import { UsersMap } from "@/components/app/users-map";
 
 export default function MapPage() {
-  return <SamplingMap />;
+  return <UsersMap />;
 }

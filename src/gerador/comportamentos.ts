@@ -10,15 +10,18 @@ export const familiaRural: Comportamento = {
   id: "familia-rural",
   nome: "Família grande da zona rural",
   descricao: "Casa cheia, renda baixa, uma compra grande por mês na cidade mais próxima.",
-  peso: (ctx) => (ctx.zona === "rural" ? 6 : ctx.municipio.size === "pequeno" ? 0.4 : 0.02),
+  // Mais comum onde a economia da cidade é agropecuária (dado do IBGE), inclusive na sede de cidades pequenas.
+  peso: (ctx) => (ctx.zona === "rural" ? 2 + 8 * ctx.agro : ctx.municipio.size === "pequeno" ? 0.1 + 1.2 * ctx.agro : 0.02),
   moradores: (r) => r.entre(3, 8, 3 + r.poisson(1.6)),
   salario: (r, ctx) => r.logNormal(2400 * Math.exp(0.15 * ctx.rendaDaCidade), 0.35),
   escolaridade: (r) => r.categorica({ fundamental: 0.6, medio: 0.33, superior: 0.07 }),
   idade: (r) => r.categorica({ "18-24": 0.08, "25-34": 0.24, "35-44": 0.3, "45-59": 0.26, "60+": 0.12 }),
   frequencia: (r) => r.categorica({ mensal: 0.78, quinzenal: 0.17, semanal: 0.05 }),
   tamanhoDaCompra: (r, ctx, p) => r.logNormal(95 * p.moradores * ctx.precoRegional, 0.28),
+  tiposDeLoja: (ctx, p) => (p.frequencia === "mensal" ? { atacarejo: 6, supermercado: 3, mercadinho: 1 } : { atacarejo: 2, supermercado: 4, mercadinho: 4 }),
   afinidadePremium: -1.1,
   afinidadePopular: 0.9,
+  afinidadeComApp: -0.9,
 };
 
 export const familiaBaixaRendaUrbana: Comportamento = {
@@ -33,8 +36,10 @@ export const familiaBaixaRendaUrbana: Comportamento = {
   frequencia: (r) => r.categorica({ mensal: 0.5, quinzenal: 0.35, semanal: 0.15 }),
   tamanhoDaCompra: (r, ctx, p) =>
     r.logNormal((p.frequencia === "mensal" ? 115 : 55) * p.moradores * ctx.precoRegional, 0.3),
+  tiposDeLoja: (ctx, p) => (p.frequencia === "mensal" ? { atacarejo: 6, supermercado: 3, mercadinho: 1 } : { atacarejo: 2, supermercado: 4, mercadinho: 4 }),
   afinidadePremium: -0.8,
   afinidadePopular: 0.7,
+  afinidadeComApp: 0,
 };
 
 export const classeMediaInterior: Comportamento = {
@@ -49,8 +54,10 @@ export const classeMediaInterior: Comportamento = {
   frequencia: (r) => r.categorica({ mensal: 0.25, quinzenal: 0.5, semanal: 0.25 }),
   tamanhoDaCompra: (r, ctx, p) =>
     r.logNormal((p.frequencia === "mensal" ? 140 : p.frequencia === "quinzenal" ? 90 : 55) * p.moradores * ctx.precoRegional, 0.3),
+  tiposDeLoja: (ctx, p) => (p.frequencia === "mensal" ? { atacarejo: 5, supermercado: 5, mercadinho: 0.5 } : { atacarejo: 2, supermercado: 7, mercadinho: 1 }),
   afinidadePremium: 0,
   afinidadePopular: 0,
+  afinidadeComApp: 0.3,
 };
 
 export const jovemDeCapital: Comportamento = {
@@ -64,8 +71,10 @@ export const jovemDeCapital: Comportamento = {
   idade: (r) => r.categorica({ "18-24": 0.3, "25-34": 0.55, "35-44": 0.15, "45-59": 0, "60+": 0 }),
   frequencia: (r) => r.categorica({ mensal: 0.05, quinzenal: 0.2, semanal: 0.75 }),
   tamanhoDaCompra: (r, ctx, p) => r.logNormal(85 * p.moradores * ctx.precoRegional * (p.salario / 7000) ** 0.3, 0.35),
+  tiposDeLoja: () => ({ atacarejo: 0.5, supermercado: 5, mercadinho: 4.5 }),
   afinidadePremium: 0.7,
   afinidadePopular: -0.4,
+  afinidadeComApp: 1.2,
 };
 
 export const aposentado: Comportamento = {
@@ -79,8 +88,10 @@ export const aposentado: Comportamento = {
   idade: () => "60+",
   frequencia: (r) => r.categorica({ mensal: 0.2, quinzenal: 0.25, semanal: 0.55 }),
   tamanhoDaCompra: (r, ctx, p) => r.logNormal(75 * p.moradores * ctx.precoRegional, 0.3),
+  tiposDeLoja: () => ({ atacarejo: 1, supermercado: 6, mercadinho: 3 }),
   afinidadePremium: 0.1,
   afinidadePopular: 0.2,
+  afinidadeComApp: -1.2,
 };
 
 export const altaRenda: Comportamento = {
@@ -94,8 +105,10 @@ export const altaRenda: Comportamento = {
   idade: (r) => r.categorica({ "18-24": 0.03, "25-34": 0.2, "35-44": 0.35, "45-59": 0.3, "60+": 0.12 }),
   frequencia: (r) => r.categorica({ mensal: 0.08, quinzenal: 0.27, semanal: 0.65 }),
   tamanhoDaCompra: (r, ctx, p) => r.logNormal(120 * p.moradores * ctx.precoRegional, 0.35),
+  tiposDeLoja: () => ({ atacarejo: 0.5, supermercado: 8, mercadinho: 1.5 }),
   afinidadePremium: 1.6,
   afinidadePopular: -1.2,
+  afinidadeComApp: 0.7,
 };
 
 export const COMPORTAMENTOS = [

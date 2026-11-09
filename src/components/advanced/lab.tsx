@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { type Confianca, motor } from "@/estatistica";
 import { MUNICIPALITIES } from "@/data/geography";
+import { distanceKm, STORE_ATTRIBUTION, STORE_TYPES, STORES, type StoreType } from "@/data/stores";
+import { STUDY } from "@/data/study-plan";
 import { BEHAVIORS, type Consumer, getPopulation, ZONES } from "@/data/population";
 import { brl, brlExact, int, num, pct, pp } from "@/lib/format";
 import {
@@ -15,16 +17,15 @@ import {
   type SimulationConfig,
 } from "@/sampling/simulation";
 import { SIMULATOR_VARIABLES, STRATIFIERS, type StratifierId, variable, type VariableId } from "@/sampling/variables";
-import { type Basemap, BrazilCanvas, type SampledPoint, STRATUM_COLORS } from "./brazil-canvas";
-import { useProfile } from "./profile-context";
+import { BASEMAP_LABELS, type Basemap, BrazilCanvas, type SampledPoint, STORE_COLORS, STRATUM_COLORS } from "@/components/app/brazil-canvas";
+import { Field, Panel, Segmented, Select, Toggle } from "@/components/app/ui";
 import { RepetitionChart } from "./repetition-chart";
-import { Field, Panel, Segmented, Select } from "./ui";
 
 const REPETITIONS = 500;
 
-export function SamplingMap() {
-  const { profile } = useProfile();
-  const units = useMemo(() => getPopulation().filter(profile.inTarget), [profile]);
+/** Free-form simulator for the live presentation: any variable, design, strata and n. */
+export function SamplingLab() {
+  const units = useMemo(() => getPopulation(), []);
 
   const [config, setConfig] = useState<SimulationConfig>({
     variable: "ticket",
@@ -35,6 +36,7 @@ export function SamplingMap() {
   });
   const [seed, setSeed] = useState(1);
   const [basemap, setBasemap] = useState<Basemap>("renda");
+  const [showStores, setShowStores] = useState(false);
   const [hover, setHover] = useState<{ point: SampledPoint; x: number; y: number } | null>(null);
   const [repetition, setRepetition] = useState<{ key: string; design: RepetitionSummary; aas: RepetitionSummary } | null>(null);
   const [running, setRunning] = useState(false);
@@ -46,7 +48,7 @@ export function SamplingMap() {
   // AES needs at least 2 units per stratum to compute s²h.
   const minN = config.design.startsWith("aes") ? 2 * strataCount : 10;
   const effective = { ...config, n: Math.max(config.n, minN) };
-  const configKey = `${profile.id}:${JSON.stringify(effective)}`;
+  const configKey = JSON.stringify(effective);
 
   const prepared = useMemo(() => prepareSimulation(motor, units, effective), [units, configKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const result = useMemo(() => runOnce(prepared, seed), [prepared, seed]);
@@ -85,16 +87,10 @@ export function SamplingMap() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-[13px] text-muted">
-          {profile.name} · {profile.targetLabel} · N = {int(units.length)}
-        </p>
-        <h1 className="text-[26px] font-medium tracking-[-0.03em]">Mapa da amostra</h1>
-        <p className="mt-1 max-w-[760px] text-[14px] text-slate">
-          Cada ponto cinza é um consumidor da população-alvo. Os pontos coloridos são os sorteados, e o tamanho de cada
-          um mostra o peso w = 1/π: quantos consumidores ele representa na estimativa.
-        </p>
-      </div>
+      <p className="max-w-[760px] text-[14px] text-slate">
+        {STUDY.targetLabel}, N = {int(units.length)}. Cada ponto cinza é um usuário. Os coloridos são os sorteados, e o tamanho de
+        cada um mostra o peso w = 1/π: quantos usuários ele representa na estimativa.
+      </p>
 
       <div className="grid gap-4 xl:grid-cols-[300px_1fr]">
         <Panel title="Plano amostral" className="h-fit">
@@ -179,26 +175,26 @@ export function SamplingMap() {
         <section className="relative overflow-hidden rounded-xl border border-line bg-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-slate">
-              {(prepared.strata.length <= 6 ? prepared.strata : prepared.strata.slice(0, 6)).map((s, h) => (
+              {(prepared.strata.length <= 8 ? prepared.strata : prepared.strata.slice(0, 8)).map((s, h) => (
                 <span key={s.key} className="inline-flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: STRATUM_COLORS[h % STRATUM_COLORS.length] }} />
                   {s.label}
                 </span>
               ))}
-              {prepared.strata.length > 6 && <span className="text-muted">+{prepared.strata.length - 6} estratos (cores repetem)</span>}
+              {prepared.strata.length > 8 && <span className="text-muted">+{prepared.strata.length - 8} estratos (cores repetem)</span>}
             </div>
+            <div className="flex flex-wrap items-center gap-3">
+            <Toggle checked={showStores} onChange={setShowStores} label={`Mercados (${int(STORES.length)}, OSM)`} />
             <Segmented
               label="Fundo do mapa"
               value={basemap}
               onChange={setBasemap}
-              options={[
-                { value: "renda", label: "PIB per capita" },
-                { value: "nenhum", label: "Sem fundo" },
-              ]}
+              options={(["renda", "agro", "rural", "nenhum"] as Basemap[]).map((b) => ({ value: b, label: BASEMAP_LABELS[b] }))}
             />
+            </div>
           </div>
           <div className="relative h-[560px] sm:h-[680px]">
-            <BrazilCanvas units={units} sample={result.sample} basemap={basemap} onHover={setHover} />
+            <BrazilCanvas units={units} sample={result.sample} basemap={basemap} showStores={showStores} onHover={setHover} />
             {hover && hovered && (
               <div
                 className="pointer-events-none absolute z-10 w-[220px] rounded-lg border border-line bg-white p-3 text-[12px] shadow-lg"
@@ -211,6 +207,10 @@ export function SamplingMap() {
                 <div className="text-muted">
                   {ZONES[hovered.zone]} · {hovered.household} moradores · {brl(hovered.salary)}/mês
                 </div>
+                <div className="text-muted">
+                  Mercado principal: {STORE_TYPES[STORES[hovered.mainStore].type].toLowerCase()},{" "}
+                  {num(distanceKm(hovered.lon, hovered.lat, STORES[hovered.mainStore]), 1)} km
+                </div>
                 <dl className="tabular mt-2 grid grid-cols-2 gap-y-0.5">
                   <dt className="text-muted">y</dt>
                   <dd className="text-right">{v.kind === "proportion" ? (v.value(hovered) ? "1 (sim)" : "0 (não)") : brlExact(v.value(hovered))}</dd>
@@ -222,8 +222,19 @@ export function SamplingMap() {
               </div>
             )}
             <div className="pointer-events-none absolute bottom-4 left-4 rounded-md bg-white/90 px-3 py-2 text-[11px] text-slate backdrop-blur">
-              {basemap === "renda" ? "Fundo: PIB per capita municipal (IBGE), em quintis. " : ""}
+              {basemap !== "nenhum" ? `Fundo: ${BASEMAP_LABELS[basemap].toLowerCase()} por município (IBGE), em quintis. ` : ""}
               Ponto maior = peso maior.
+              {showStores && (
+                <span className="mt-1 flex flex-wrap gap-x-3">
+                  {(Object.keys(STORE_TYPES) as StoreType[]).map((type) => (
+                    <span key={type} className="inline-flex items-center gap-1">
+                      <span className="h-2 w-2" style={{ background: STORE_COLORS[type] }} />
+                      {STORE_TYPES[type]}
+                    </span>
+                  ))}
+                  <span>{STORE_ATTRIBUTION}</span>
+                </span>
+              )}
             </div>
           </div>
         </section>

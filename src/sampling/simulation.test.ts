@@ -3,7 +3,7 @@
 import { describe, expect, test } from "vitest";
 import { motor } from "@/estatistica";
 import { getPopulation } from "@/data/population";
-import { PROFILES } from "@/data/profiles";
+import { STUDY } from "@/data/study-plan";
 import { type Design, prepareSimulation, repeat } from "./simulation";
 import { runStudy } from "./study";
 
@@ -28,21 +28,42 @@ describe("simulator", () => {
     },
   );
 
-  test("Neyman allocation beats proportional when strata differ in spread", () => {
-    const run = (design: Design) =>
-      repeat(prepareSimulation(motor, population, { variable: "ticket", design, n: 400, stratifyBy: "income", confidence: 0.95 }), 300, 7)
-        .empiricalVariance;
-    expect(run("aes-neyman")).toBeLessThan(run("aes-proporcional") * 1.05);
-    expect(run("aes-proporcional")).toBeLessThan(run("aas"));
+  test("strata related to y cut variance, and Neyman cuts it further", () => {
+    const variance = (design: Design) =>
+      prepareSimulation(motor, population, { variable: "ticket", design, n: 400, stratifyBy: "behavior", confidence: 0.95 }).variance;
+    // Neyman is optimal for the variable it allocates on (up to rounding mh to integers).
+    expect(variance("aes-neyman")).toBeLessThan(variance("aes-proporcional") * 1.01);
+    expect(variance("aes-proporcional")).toBeLessThan(variance("aas"));
   });
 });
 
 describe("study", () => {
-  test.each(PROFILES)("$name: sample size matches the plan and group estimates use every stratum", (profile) => {
-    const study = runStudy(motor, population, profile, 0.95);
-    expect(study.m).toBe(profile.sampleSize);
-    const share = study.estimate(profile.tier ? `${profile.tier}:${profile.defaultProduct}` : "monthly");
-    const groupN = share.byFirst.reduce((acc, g) => acc + g.estimate.estratos.reduce((a, s) => a + s.Nh, 0), 0);
-    expect(groupN).toBe(study.N);
+  test("sample size matches the plan, and each breakdown covers every stratum exactly once", () => {
+    const study = runStudy(motor, population, STUDY);
+    expect(study.m).toBe(STUDY.sampleSize);
+    const share = study.estimate(`premium:${STUDY.defaultProduct}`);
+    for (const groups of [share.byFirst, share.bySecond]) {
+      const groupN = groups.reduce((acc, g) => acc + g.estimate.estratos.reduce((a, s) => a + s.Nh, 0), 0);
+      expect(groupN).toBe(study.N);
+    }
   });
+});
+
+describe("exact design variance", () => {
+  test.each<Design>(["aas", "aes-proporcional", "aes-neyman", "aes-igual", "as"])(
+    "%s: the variance across repeated samples matches the exact one",
+    (design) => {
+      const prepared = prepareSimulation(motor, population, {
+        variable: "premium:cafe",
+        design,
+        n: STUDY.sampleSize,
+        stratifyBy: "regionIncome",
+        allocationVariable: STUDY.allocationVariable,
+        confidence: 0.95,
+      });
+      const ratio = repeat(prepared, 400, 11).empiricalVariance / prepared.variance;
+      expect(ratio).toBeGreaterThan(0.75);
+      expect(ratio).toBeLessThan(1.3);
+    },
+  );
 });

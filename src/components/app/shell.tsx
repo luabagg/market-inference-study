@@ -4,12 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "@/components/logo";
-import { PROFILES } from "@/data/profiles";
-import { useProfile } from "./profile-context";
+import { STATE_NAME } from "@/data/geography";
+import { ORGANIZATION } from "@/data/products";
+import { STUDY } from "@/data/study-plan";
 
 const NAV = [
-  { href: "/app", label: "Painel do estudo", icon: "M3 13h4v8H3zM10 8h4v13h-4zM17 3h4v18h-4z" },
-  { href: "/app/mapa", label: "Mapa da amostra", icon: "M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zm0 0v14m6-12v14" },
+  { href: "/app", label: "Resultados", icon: "M3 13h4v8H3zM10 8h4v13h-4zM17 3h4v18h-4z" },
+  { href: "/app/mapa", label: "Onde estão os usuários", icon: "M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zm0 0v14m6-12v14" },
+  { href: "/app/metodos", label: "Como sorteamos", icon: "M4 6h16M4 12h10M4 18h6" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -18,7 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar />
         <div className="min-w-0 flex-1">
           <div className="border-b border-line bg-sample-soft px-4 py-2 text-center text-[12px] text-ink/80 sm:px-8">
-            Demonstração com dados sintéticos. Empresas e consumidores são fictícios; municípios e população vêm do IBGE.
+            Demonstração com dados simulados. Empresas e usuários são fictícios; municípios e população vêm do IBGE.
           </div>
           <main className="mx-auto max-w-[1280px] px-4 py-6 sm:px-8 sm:py-8">{children}</main>
         </div>
@@ -47,7 +49,7 @@ function Sidebar() {
             <Logo />
           </Link>
         </div>
-        <ProfileSwitcher onPick={() => setOpen(false)} />
+        <OrganizationCard />
         <nav className="mt-4 space-y-0.5 px-3">
           {NAV.map((item) => {
             const active = pathname === item.href;
@@ -67,6 +69,12 @@ function Sidebar() {
           })}
         </nav>
         <div className="mt-auto border-t border-line p-5 text-[12px] leading-relaxed text-muted">
+          <Link href="/avancado" className="block font-medium text-ink hover:text-brand">
+            Página da apresentação ›
+          </Link>
+          <Link href="/fontes" className="mb-3 block font-medium text-ink hover:text-brand">
+            Fontes dos dados ›
+          </Link>
           Motor estatístico:{" "}
           <code className="rounded bg-canvas px-1 py-0.5 font-mono text-[11px] text-ink">
             {process.env.NEXT_PUBLIC_MOTOR === "aluno" ? "aluno.ts" : "referencia.ts"}
@@ -79,33 +87,16 @@ function Sidebar() {
   );
 }
 
-function ProfileSwitcher({ onPick }: { onPick: () => void }) {
-  const { profile, setProfile } = useProfile();
+function OrganizationCard() {
   return (
     <div className="px-3">
-      <div className="px-2 pb-2 text-[11px] font-medium tracking-wide text-muted uppercase">Cliente</div>
-      <div className="space-y-1" role="radiogroup" aria-label="Cliente da demonstração">
-        {PROFILES.map((p) => {
-          const active = p.id === profile.id;
-          return (
-            <button
-              key={p.id}
-              role="radio"
-              aria-checked={active}
-              onClick={() => {
-                setProfile(p.id);
-                onPick();
-              }}
-              className={`w-full rounded-lg border px-3 py-2.5 text-left transition ${active ? "border-ink/15 bg-canvas shadow-[0_1px_0_rgba(11,31,51,0.04)]" : "border-transparent hover:bg-canvas"}`}
-            >
-              <div className="flex items-center gap-2">
-                <span className={`h-2 w-2 rounded-full ${active ? "bg-sample" : "bg-line"}`} />
-                <span className="text-[14px] font-medium">{p.name}</span>
-              </div>
-              <div className="mt-0.5 pl-4 text-[12px] text-muted">{p.segment}</div>
-            </button>
-          );
-        })}
+      <div className="rounded-lg border border-ink/15 bg-canvas px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-sample" />
+          <span className="text-[14px] font-medium">{ORGANIZATION.name}</span>
+        </div>
+        <div className="mt-0.5 pl-4 text-[12px] text-muted">{STUDY.title}</div>
+        <div className="pl-4 text-[12px] text-muted">Base: app Cestinha, {STATE_NAME}</div>
       </div>
     </div>
   );

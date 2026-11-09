@@ -6,7 +6,8 @@
 import { CITY_SIZES, type CitySize, REGIONS, type RegionCode } from "@/data/geography";
 import { BEHAVIORS, type Consumer, EDUCATION, INCOME_BANDS, type IncomeBand, ZONES } from "@/data/population";
 import type { Escolaridade, Zona } from "@/gerador/tipos";
-import { PRODUCTS, type ProductId, productById } from "@/data/products";
+import { PRODUCTS, type ProductId, productById, skuName, type Tier } from "@/data/products";
+import { STORE_TYPES, type StoreType } from "@/data/stores";
 
 export type VariableId =
   | "ticket"
@@ -15,6 +16,8 @@ export type VariableId =
   | "monthly"
   | `premium:${ProductId}`
   | `popular:${ProductId}`
+  | `outra:${ProductId}`
+  | `store:${StoreType}`
   | `behavior:${string}`;
 
 export type Variable = {
@@ -32,18 +35,22 @@ export const variable = (id: VariableId): Variable => {
     return { id, label: "Gasto planejado por mês (R$)", kind: "mean", value: (c) => c.monthlySpend };
   if (id === "monthly")
     return { id, label: "Faz compra do mês", kind: "proportion", value: (c) => (c.frequency === "mensal" ? 1 : 0) };
+  if (id.startsWith("store:")) {
+    const type = id.slice("store:".length) as StoreType;
+    return { id, label: `Planejou lista para ${STORE_TYPES[type].toLowerCase()}`, kind: "proportion", value: (c) => (c.storeTypes[type] ? 1 : 0) };
+  }
   if (id.startsWith("behavior:")) {
     const behaviorId = id.slice("behavior:".length);
     const behavior = BEHAVIORS.find((b) => b.id === behaviorId);
     return { id, label: `Comportamento: ${behavior?.nome ?? behaviorId}`, kind: "proportion", value: (c) => (c.behavior === behaviorId ? 1 : 0) };
   }
-  const [tier, productId] = id.split(":") as ["premium" | "popular", ProductId];
+  const [tier, productId] = id.split(":") as [Tier, ProductId];
   const product = productById(productId);
   return {
     id,
-    label: `${product.name}: lista ${tier === "premium" ? product.premium : product.value}`,
+    label: `Listou ${skuName(product, tier)} no trimestre`,
     kind: "proportion",
-    value: (c) => (c.brands[productId] === tier ? 1 : 0),
+    value: (c) => (c.listed[productId][tier] ? 1 : 0),
   };
 };
 
@@ -52,15 +59,16 @@ export const SIMULATOR_VARIABLES: VariableId[] = [
   "monthlySpend",
   "salary",
   "monthly",
-  ...PRODUCTS.flatMap((p) => [`premium:${p.id}`, `popular:${p.id}`] as VariableId[]),
+  ...(Object.keys(STORE_TYPES) as StoreType[]).map((t): VariableId => `store:${t}`),
+  ...PRODUCTS.flatMap((p) => [`premium:${p.id}`, `popular:${p.id}`, `outra:${p.id}`] as VariableId[]),
 ];
 
-export type StratifierId = "region" | "size" | "income" | "zone" | "education" | "behavior" | "uf";
+export type StratifierId = "region" | "size" | "income" | "zone" | "education" | "behavior" | "regionIncome";
 
 type Stratifier = { id: StratifierId; label: string; key: (c: Consumer) => string; name: (key: string) => string };
 
 export const STRATIFIERS: Record<StratifierId, Stratifier> = {
-  region: { id: "region", label: "Região", key: (c) => c.region, name: (k) => REGIONS[k as RegionCode] },
+  region: { id: "region", label: "Região intermediária", key: (c) => c.region, name: (k) => REGIONS[k as RegionCode] },
   size: { id: "size", label: "Porte da cidade", key: (c) => c.size, name: (k) => CITY_SIZES[k as CitySize] },
   income: { id: "income", label: "Faixa de renda", key: (c) => c.income, name: (k) => INCOME_BANDS[k as IncomeBand] },
   zone: { id: "zone", label: "Zona", key: (c) => c.zone, name: (k) => ZONES[k as Zona] },
@@ -71,7 +79,16 @@ export const STRATIFIERS: Record<StratifierId, Stratifier> = {
     key: (c) => c.behavior,
     name: (k) => BEHAVIORS.find((b) => b.id === k)?.nome ?? k,
   },
-  uf: { id: "uf", label: "Estado (UF)", key: (c) => c.uf, name: (k) => k },
+  // The study's own strata: region × income band.
+  regionIncome: {
+    id: "regionIncome",
+    label: "Região × faixa de renda",
+    key: (c) => `${c.region}|${c.income}`,
+    name: (k) => {
+      const [region, income] = k.split("|");
+      return `${REGIONS[region]} · ${INCOME_BANDS[income as IncomeBand]}`;
+    },
+  },
 };
 
 // Stable display order for stratum keys.

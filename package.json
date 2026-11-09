@@ -8,8 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "data:ibge": "node scripts/build-ibge.ts",
+    "data:dots": "node scripts/build-dots.ts",
     "test": "vitest run",
-    "data:dots": "node scripts/build-dots.ts"
+    "data:stores": "node scripts/build-stores.ts"
   },
   "dependencies": {
     "d3-geo": "^3.1.2",

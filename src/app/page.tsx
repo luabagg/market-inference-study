@@ -1,19 +1,11 @@
-import Image from "next/image";
 import Link from "next/link";
+import { AppListing } from "@/components/landing/app-listing";
 import { HeroMap } from "@/components/landing/hero-map";
 import { LiveCounter } from "@/components/landing/live-counter";
 import { Logo } from "@/components/logo";
 import { IBGE_YEARS } from "@/data/geography";
 import { brl, compact, int, pct, pp } from "@/lib/format";
 import { getLandingFacts } from "@/lib/landing-facts";
-
-const CLIENTS = [
-  { name: "Casa Nobre", className: "font-serif italic text-[21px] tracking-tight" },
-  { name: "Bom Dia", className: "font-extrabold text-[20px] tracking-[-0.04em]" },
-  { name: "REDE SERTÃO", className: "font-semibold text-[15px] tracking-[0.18em]" },
-  { name: "mercantil ipê", className: "font-medium text-[19px] tracking-tight lowercase" },
-  { name: "Grupo Maré", className: "font-bold text-[18px] tracking-[-0.02em]" },
-];
 
 export default function Home() {
   const facts = getLandingFacts();
@@ -32,19 +24,19 @@ export default function Home() {
                 <LiveCounter start={facts.lists} />
               </span>
             </p>
-            <h1 className="text-[36px] leading-[1.1] font-medium tracking-[-0.035em] sm:text-[46px]">
-              Saiba o que o Brasil vai colocar no carrinho.{" "}
-              <span className="text-slate/75">
-                A Fração transforma listas de supermercado em estimativas de consumo, com margem de erro, para cada
-                região do país.
-              </span>
+            <h1 className="text-[38px] leading-[1.08] font-medium tracking-[-0.035em] sm:text-[52px]">
+              A gente cuida dos dados. Você cuida de vender.
             </h1>
+            <p className="mt-6 max-w-[540px] text-[18px] leading-relaxed text-slate">
+              {compact(facts.users)} famílias gaúchas montam a lista de compras no Cestinha, o nosso app. A Fração transforma essas
+              listas em números sobre o seu consumidor: quem compra a sua marca, onde e quanto gasta.
+            </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link
                 href="/app"
                 className="inline-flex h-11 items-center gap-1.5 rounded-md bg-ink px-5 text-[15px] font-medium text-white transition hover:bg-ink/85"
               >
-                Abrir a demonstração <span aria-hidden>›</span>
+                Ver a demonstração <span aria-hidden>›</span>
               </Link>
               <a
                 href="#contato"
@@ -59,8 +51,8 @@ export default function Home() {
             <FloatingCard
               className="top-[8%] left-[0%] hidden sm:block"
               label="Amostra sorteada"
-              value={`${int(facts.sampleSize)} consumidores`}
-              note="9 estratos de renda × porte"
+              value={`${int(facts.sampleSize)} famílias`}
+              note="separadas por região e faixa de renda"
             />
             <FloatingCard
               className="right-[0%] bottom-[6%]"
@@ -72,155 +64,88 @@ export default function Home() {
         </Frame>
       </section>
 
-      {/* Clients */}
-      <section className="border-b border-line">
-        <Frame className="flex flex-wrap items-center justify-between gap-x-10 gap-y-5 py-8 text-ink/75">
-          {CLIENTS.map((c) => (
-            <span key={c.name} className={c.className}>
-              {c.name}
-            </span>
-          ))}
-        </Frame>
-      </section>
-
-      {/* How it works */}
-      <section id="como-funciona" className="border-b border-line scroll-mt-16">
-        <Frame className="py-24">
-          <SectionTitle
-            strong="Da lista no celular ao relatório."
-            soft="As famílias já planejam a compra no celular. Usamos essas listas no lugar de questionários e entrevistadores."
-          />
-          <div className="mt-14 grid gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-3">
-            <Step
-              n="1"
-              title="As famílias planejam a compra"
-              body={`No app Cestinha, ${compact(facts.consumers)} famílias montam a lista antes de ir ao mercado. Cada item, marca e quantidade vira um registro anônimo.`}
-            />
-            <Step
-              n="2"
-              title="Sorteamos quem entra na conta"
-              body="Para cada estudo, sorteamos uma amostra separada por região, porte da cidade e faixa de renda. Quem representa mais gente pesa mais no resultado."
-            />
-            <Step
-              n="3"
-              title="Você recebe o número e a margem"
-              body="Toda estimativa vem com intervalo de confiança. Fica claro o que é diferença real entre regiões e o que é variação de amostra."
-            />
-          </div>
-        </Frame>
-      </section>
-
-      {/* Use cases */}
-      <section id="casos" className="border-b border-line bg-canvas scroll-mt-16">
-        <Frame className="py-24">
-          <SectionTitle
-            strong="Perguntas que um gerente de categoria faz toda semana."
-            soft="Exemplos tirados da demonstração, com a mesma base sintética e o mesmo método."
-          />
-          <div className="mt-14 grid gap-4 lg:grid-cols-6">
-            <Card className="lg:col-span-3" title="Onde a marca premium entra na lista" caption="Casa Nobre Especial · café · por faixa de renda">
-              <Bars rows={facts.premiumByIncome} format={pct} marginFormat={pp} max={0.6} color="var(--color-brand)" />
-            </Card>
-            <Card className="lg:col-span-3" title="Compra do mês ou compra da semana" caption="Lares que fazem uma compra grande por mês">
-              <Bars rows={facts.monthlyBySize} format={pct} marginFormat={pp} max={0.8} color="var(--color-s2)" />
-            </Card>
-            <Card className="lg:col-span-2" title="Ticket médio por região" caption="Média por consumidor do valor planejado em cada lista">
-              <ul className="divide-y divide-line text-[14px]">
-                {facts.ticketByRegion.map((r) => (
-                  <li key={r.label} className="flex items-baseline justify-between py-2">
-                    <span className="text-slate">{r.label}</span>
-                    <span className="tabular font-medium">
-                      {brl(r.value)} <span className="text-[12px] font-normal text-muted">± {brl(r.margin)}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-            <Card className="lg:col-span-4" title="Quanto custa cada ponto de precisão" caption="Consumidores necessários para estimar uma proporção, 95% de confiança">
-              <div className="grid grid-cols-3 gap-3">
-                {facts.sizes.map((s) => (
-                  <div key={s.D} className="rounded-lg border border-line bg-white p-4">
-                    <div className="text-[12px] text-muted">Margem de ± {pp(s.D, 0)}</div>
-                    <div className="tabular mt-1 text-[26px] font-medium tracking-tight">{int(s.n)}</div>
-                    <div className="mt-3 h-1.5 rounded-full bg-hairline">
-                      <div className="h-full rounded-full bg-sample" style={{ width: `${(s.n / facts.sizes[2].n) * 100}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-4 text-[13px] leading-relaxed text-slate">
-                Cortar a margem pela metade pede perto de quatro vezes mais consumidores. Por isso o preço de um estudo
-                sai da margem de erro que você precisa.
-              </p>
-            </Card>
-          </div>
-        </Frame>
-      </section>
-
-      {/* Product preview */}
-      <section className="border-b border-line">
-        <Frame className="grid items-center gap-12 py-24 lg:grid-cols-[0.8fr_1.2fr]">
-          <div>
-            <SectionTitle
-              strong="Um painel por estudo."
-              soft="Escolha o produto, compare regiões e veja como a amostra foi desenhada. Cada número mostra de onde veio."
-            />
-            <ul className="mt-8 space-y-3 text-[15px] text-slate">
-              <li className="flex gap-3">
-                <Dot /> Estimativas com intervalo de confiança em todos os gráficos
-              </li>
-              <li className="flex gap-3">
-                <Dot /> Mapa com cada consumidor sorteado e o peso que ele recebe
-              </li>
-              <li className="flex gap-3">
-                <Dot /> Plano amostral aberto: estratos, tamanhos e alocação
-              </li>
-            </ul>
-            <Link href="/app" className="mt-10 inline-flex items-center gap-1.5 text-[15px] font-medium text-brand hover:text-brand-strong">
-              Ver o painel da Casa Nobre <span aria-hidden>›</span>
-            </Link>
-          </div>
-          <div className="overflow-hidden rounded-xl border border-line shadow-[0_30px_60px_-30px_rgba(11,31,51,0.35)]">
-            <Image src="/preview-painel.png" alt="Painel da demonstração com estimativas por renda e porte" width={1440} height={900} className="w-full" />
-          </div>
-        </Frame>
-      </section>
-
       {/* Numbers */}
       <section className="bg-ink text-white">
-        <Frame className="py-24">
-          <h2 className="max-w-[640px] text-[32px] leading-tight font-medium tracking-[-0.03em]">
-            Consumidores nas 27 unidades da federação.{" "}
-            <span className="text-white/55">
-              Construída sobre o Censo {IBGE_YEARS.census} e o PIB dos Municípios {IBGE_YEARS.gdp}, do IBGE.
-            </span>
-          </h2>
-          <dl className="mt-14 grid grid-cols-2 gap-y-10 border-t border-white/15 pt-10 md:grid-cols-4">
-            <Stat value={compact(facts.consumers)} label="famílias ativas no app" />
-            <Stat value={int(facts.municipalities)} label="municípios com consumidores" />
-            <Stat value={compact(facts.lists)} label="listas a cada trimestre" />
-            <Stat value={`± ${pp(facts.typicalMargin)}`} label="margem de um estudo padrão" />
+        <Frame className="py-16">
+          <dl className="grid grid-cols-2 gap-y-10 md:grid-cols-4">
+            <Stat value={compact(facts.users)} label="famílias usando o app no RS" />
+            <Stat value={compact(facts.lists)} label="listas de compras a cada três meses" />
+            <Stat value={`${int(facts.cities)} de ${int(facts.stateCities)}`} label="cidades gaúchas com usuários" />
+            <Stat value={`± ${pp(facts.typicalMargin)}`} label={`margem de erro com ${int(facts.sampleSize)} famílias`} />
           </dl>
         </Frame>
       </section>
 
-      {/* Privacy and limits */}
-      <section id="privacidade" className="border-b border-line scroll-mt-16">
+      {/* How it works */}
+      <section id="como-funciona" className="border-b border-line bg-canvas scroll-mt-16">
+        <Frame className="py-24">
+          <SectionTitle strong="Como chega até você." soft="Sem questionário e sem entrevistador: os dados vêm do nosso app." />
+          <div className="mt-14 grid items-start gap-10 lg:grid-cols-[1fr_1.05fr]">
+            <AppListing downloads={`${compact(facts.downloads)}+`} users={compact(facts.users)} />
+            <ol className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+              <Step
+                n="1"
+                title="A família monta a lista no Cestinha"
+                body="Cada item vira um registro anônimo: produto, marca, quantidade e o mercado onde a família pretende comprar."
+              />
+              <Step
+                n="2"
+                title="Sorteamos quem entra na conta"
+                body={`Para cada estudo, sorteamos cerca de ${int(facts.sampleSize)} famílias, separadas por região e faixa de renda, para que nenhum grupo fique de fora.`}
+              />
+              <Step
+                n="3"
+                title="Você recebe o número e a margem"
+                body="Todo resultado vem com margem de erro. Assim dá para saber se a diferença entre duas regiões é real ou é só variação de amostra."
+              />
+            </ol>
+          </div>
+        </Frame>
+      </section>
+
+      {/* What you get */}
+      <section id="dados" className="border-b border-line scroll-mt-16">
+        <Frame className="py-24">
+          <SectionTitle
+            strong="O que a família planeja comprar, antes de entrar no mercado."
+            soft="Você recebe percentuais e médias com margem de erro, nunca a lista de alguém. Exemplos da demonstração:"
+          />
+          <div className="mt-14 grid gap-4 lg:grid-cols-3">
+            <Card title="Quem põe o café premium na lista" caption="Café Reserva, da Serra Azul, por renda da casa">
+              <Bars rows={facts.premiumByIncome} max={0.7} color="var(--color-brand)" />
+            </Card>
+            <Card title="Onde a lista vai ser comprada" caption="Famílias com ao menos uma lista para cada tipo de loja">
+              <Bars rows={facts.stores} max={1} color="var(--color-s6)" />
+            </Card>
+            <Card title="Como a família compra" caption="Média entre as famílias do app">
+              <div className="space-y-6">
+                <Figure value={brl(facts.ticket.estimativa)} margin={brl(facts.ticket.margem)} label="planejados por compra" />
+                <Figure value={pct(facts.monthly.estimativa)} margin={pp(facts.monthly.margem)} label="fazem uma compra grande por mês" />
+              </div>
+            </Card>
+          </div>
+          <Link href="/app" className="mt-10 inline-flex items-center gap-1.5 text-[15px] font-medium text-brand hover:text-brand-strong">
+            Ver o estudo completo da Serra Azul <span aria-hidden>›</span>
+          </Link>
+        </Frame>
+      </section>
+
+      {/* Limits and privacy */}
+      <section id="limites" className="border-b border-line scroll-mt-16">
         <Frame className="grid gap-14 py-24 md:grid-cols-2">
           <div>
-            <h3 className="text-[22px] font-medium tracking-[-0.02em]">Você recebe números agregados.</h3>
+            <h3 className="text-[22px] font-medium tracking-[-0.02em]">Quem usa o app não é o estado inteiro.</h3>
             <p className="mt-4 text-[15px] leading-relaxed text-slate">
-              Nenhuma lista individual sai da Fração. Os relatórios mostram estimativas para grupos de consumidores, e
-              cada célula publicada precisa ter amostra suficiente para não identificar ninguém. Quem usa o Cestinha
-              autoriza o uso anônimo no cadastro e pode sair quando quiser.
+              O Cestinha tem mais gente de Porto Alegre, das cidades ricas e jovem do que o Rio Grande do Sul. Mostramos esse perfil em
+              todo estudo e, quando a pergunta é sobre o estado, ajustamos pelo Censo {IBGE_YEARS.census} do IBGE. O ajuste corrige o que
+              vem de onde as pessoas moram. O que sobra, a gente diz no relatório.
             </p>
           </div>
           <div>
-            <h3 className="text-[22px] font-medium tracking-[-0.02em]">O que os números medem.</h3>
+            <h3 className="text-[22px] font-medium tracking-[-0.02em]">Ninguém vê a lista de ninguém.</h3>
             <p className="mt-4 text-[15px] leading-relaxed text-slate">
-              Uma lista registra intenção de compra. O que vai para o caixa pode ser diferente. E quem usa o app não
-              representa o Brasil inteiro: a base tem mais gente nas capitais e no Sul e Sudeste. A estratificação e os
-              pesos corrigem a composição dentro da base, mas quem nunca instalou o app fica fora da conta.
+              Nenhuma lista individual sai da Fração. Os relatórios mostram números de grupos, e cada grupo publicado precisa ser grande
+              o bastante para não identificar ninguém. Quem usa o Cestinha autoriza o uso anônimo no cadastro e pode sair quando quiser.
             </p>
           </div>
         </Frame>
@@ -229,15 +154,17 @@ export default function Home() {
       {/* CTA */}
       <section id="contato" className="scroll-mt-16">
         <Frame className="flex flex-col items-start justify-between gap-8 py-20 md:flex-row md:items-center">
-          <h2 className="max-w-[560px] text-[30px] leading-tight font-medium tracking-[-0.03em]">
-            Veja um estudo completo.{" "}
-            <span className="text-slate/80">Três clientes usam a mesma base para perguntas diferentes. Como a Fração é um projeto acadêmico, a demonstração faz o papel da conversa com vendas.</span>
+          <h2 className="max-w-[580px] text-[30px] leading-tight font-medium tracking-[-0.03em]">
+            Veja um estudo pronto.{" "}
+            <span className="text-slate/80">
+              A Fração é um projeto acadêmico, então a demonstração faz o papel da conversa com vendas.
+            </span>
           </h2>
           <Link
             href="/app"
             className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-md bg-ink px-5 text-[15px] font-medium text-white transition hover:bg-ink/85"
           >
-            Abrir a demonstração <span aria-hidden>›</span>
+            Ver a demonstração <span aria-hidden>›</span>
           </Link>
         </Frame>
       </section>
@@ -246,8 +173,15 @@ export default function Home() {
         <Frame className="flex flex-col gap-4 py-10 text-[13px] text-muted md:flex-row md:items-center md:justify-between">
           <Logo className="text-ink" />
           <p className="max-w-[520px] md:text-right">
-            Projeto acadêmico de Técnicas de Amostragem (STC 1079, UFSM). A Fração, seus clientes e os consumidores são
-            fictícios. Municípios, população e PIB vêm do IBGE.
+            Projeto acadêmico de Técnicas de Amostragem (STC 1079, UFSM). A Fração, o Cestinha, seus clientes e usuários são fictícios.
+            Municípios, população e PIB vêm do IBGE; mercados, do OpenStreetMap.{" "}
+            <Link href="/fontes" className="underline hover:text-ink">
+              Fontes
+            </Link>{" "}
+            ·{" "}
+            <Link href="/avancado" className="underline hover:text-ink">
+              Apresentação
+            </Link>
           </p>
         </Frame>
       </footer>
@@ -264,12 +198,12 @@ function Header() {
         </Link>
         <nav className="hidden items-center gap-8 text-[14px] font-medium text-ink/80 md:flex">
           <a href="#como-funciona" className="hover:text-ink">
-            Como funciona
+            O app
           </a>
-          <a href="#casos" className="hover:text-ink">
-            Casos de uso
+          <a href="#dados" className="hover:text-ink">
+            O que você recebe
           </a>
-          <a href="#privacidade" className="hover:text-ink">
+          <a href="#limites" className="hover:text-ink">
             Privacidade
           </a>
         </nav>
@@ -290,16 +224,14 @@ function Header() {
 function Frame({ className = "", children }: { className?: string; children: React.ReactNode }) {
   return (
     <div className="mx-auto max-w-[1160px] px-4 sm:px-8">
-      <div className={`relative ${className}`}>
-        {children}
-      </div>
+      <div className={className}>{children}</div>
     </div>
   );
 }
 
 function SectionTitle({ strong, soft }: { strong: string; soft: string }) {
   return (
-    <h2 className="max-w-[720px] text-[30px] leading-[1.15] font-medium tracking-[-0.03em] sm:text-[36px]">
+    <h2 className="max-w-[760px] text-[30px] leading-[1.15] font-medium tracking-[-0.03em] sm:text-[36px]">
       {strong} <span className="text-slate/80">{soft}</span>
     </h2>
   );
@@ -307,19 +239,19 @@ function SectionTitle({ strong, soft }: { strong: string; soft: string }) {
 
 function Step({ n, title, body }: { n: string; title: string; body: string }) {
   return (
-    <div className="bg-white p-8">
+    <li className="p-8">
       <div className="tabular flex h-7 w-7 items-center justify-center rounded-full border border-line text-[13px] font-medium text-slate">
         {n}
       </div>
       <h3 className="mt-6 text-[17px] font-medium tracking-[-0.01em]">{title}</h3>
       <p className="mt-2 text-[15px] leading-relaxed text-slate">{body}</p>
-    </div>
+    </li>
   );
 }
 
-function Card({ title, caption, className = "", children }: { title: string; caption: string; className?: string; children: React.ReactNode }) {
+function Card({ title, caption, children }: { title: string; caption: string; children: React.ReactNode }) {
   return (
-    <div className={`rounded-xl border border-line bg-white p-6 ${className}`}>
+    <div className="rounded-xl border border-line bg-white p-6">
       <h3 className="text-[17px] font-medium tracking-[-0.01em]">{title}</h3>
       <p className="mt-1 mb-6 text-[13px] text-muted">{caption}</p>
       {children}
@@ -327,39 +259,33 @@ function Card({ title, caption, className = "", children }: { title: string; cap
   );
 }
 
-function Bars({
-  rows,
-  format,
-  marginFormat,
-  max,
-  color,
-}: {
-  rows: { label: string; value: number; margin: number }[];
-  format: (v: number) => string;
-  marginFormat: (v: number) => string;
-  max: number;
-  color: string;
-}) {
+function Bars({ rows, max, color }: { rows: { label: string; value: number; margin: number }[]; max: number; color: string }) {
   return (
     <div className="space-y-4">
       {rows.map((r) => (
         <div key={r.label}>
-          <div className="mb-1.5 flex items-baseline justify-between text-[13px]">
-            <span className="text-slate">{r.label}</span>
-            <span className="tabular font-medium">
-              {format(r.value)} <span className="font-normal text-muted">± {marginFormat(r.margin)}</span>
+          <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[13px]">
+            <span className="truncate text-slate">{r.label}</span>
+            <span className="tabular shrink-0 font-medium">
+              {pct(r.value)} <span className="font-normal text-muted">± {pp(r.margin)}</span>
             </span>
           </div>
           <div className="relative h-2.5 rounded-full bg-hairline">
             <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${(r.value / max) * 100}%`, background: color }} />
-            {/* Confidence interval whisker */}
-            <div
-              className="absolute -inset-y-1 border-x-2 border-ink/50"
-              style={{ left: `${((r.value - r.margin) / max) * 100}%`, width: `${((2 * r.margin) / max) * 100}%` }}
-            />
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function Figure({ value, margin, label }: { value: string; margin: string; label: string }) {
+  return (
+    <div>
+      <div className="tabular text-[30px] font-medium tracking-[-0.03em]">
+        {value} <span className="text-[14px] font-normal text-muted">± {margin}</span>
+      </div>
+      <div className="text-[14px] text-slate">{label}</div>
     </div>
   );
 }
@@ -378,12 +304,8 @@ function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div>
       <dt className="sr-only">{label}</dt>
-      <dd className="tabular text-[34px] font-medium tracking-[-0.03em]">{value}</dd>
+      <dd className="tabular text-[32px] font-medium tracking-[-0.03em]">{value}</dd>
       <dd className="mt-1 text-[14px] text-white/60">{label}</dd>
     </div>
   );
-}
-
-function Dot() {
-  return <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sample" aria-hidden />;
 }
