@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+/* Fração design tokens. Light only: this is a printed-pitch style product site. */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+
+  --color-ink: #0b1f33;
+  --color-slate: #425466;
+  --color-muted: #6b7c93;
+  --color-line: #e3e8ee;
+  --color-hairline: #edf1f5;
+  --color-canvas: #f6f9fc;
+
+  --color-brand: #0a7c5a;
+  --color-brand-strong: #075e44;
+  --color-brand-soft: #e3f4ee;
+  --color-sample: #ff6b35;
+  --color-sample-soft: #fff0e9;
+
+  /* Categorical palette for strata (validated for contrast on white). */
+  --color-s1: #0a7c5a;
+  --color-s2: #2f6fde;
+  --color-s3: #e2873a;
+  --color-s4: #9a4fc4;
+  --color-s5: #d64575;
+  --color-s6: #1f9fb4;
+}
+
+html {
+  color: var(--color-ink);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-feature-settings: "ss01", "cv11";
+}
+
+::selection {
+  background: var(--color-brand-soft);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.6s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
+}
