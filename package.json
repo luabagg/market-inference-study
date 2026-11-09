@@ -10,7 +10,8 @@
     "data:ibge": "node scripts/build-ibge.ts",
     "data:dots": "node scripts/build-dots.ts",
     "test": "vitest run",
-    "data:stores": "node scripts/build-stores.ts"
+    "data:stores": "node scripts/build-stores.ts",
+    "data:setores": "node scripts/build-setores.ts"
   },
   "dependencies": {
     "d3-geo": "^3.1.2",
@@ -23,7 +24,7 @@
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
     "@types/d3-geo": "^3.1.1",
-    "@types/node": "^20",
+    "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/topojson-client": "^3.1.5",

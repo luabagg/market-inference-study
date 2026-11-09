@@ -8,7 +8,7 @@
  */
 import type { Confianca, RegraAlocacao } from "@/estatistica";
 import type { StratifierId, VariableId } from "@/sampling/variables";
-import type { ProductId } from "./products";
+import type { ProductId } from "@/mundo/products";
 
 export type StudyPlan = {
   title: string;

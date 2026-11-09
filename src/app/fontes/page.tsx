@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
-import { ASSUMPTIONS, DATA_SOURCES, MARKET_SOURCES, METHOD_SOURCES, type Source } from "@/data/sources";
+import { ASSUMPTIONS, DATA_SOURCES, MARKET_SOURCES, METHOD_SOURCES, type Source } from "@/mundo/sources";
 
 export const metadata: Metadata = { title: "Fontes · Fração" };
 

@@ -14,10 +14,10 @@ pnpm test         # gabarito das apostilas + propriedades do simulador
 | `/app` | Demo para o cliente (Serra Azul Alimentos, fictícia, sem login): só resultados, sem seletores de amostragem. Linhas Reserva e Clássico por categoria, região e renda, tipos de loja e quem usa o app comparado com o RS. |
 | `/app/mapa` | Onde estão os usuários e quem foi sorteado no estudo. Clique numa cidade para aproximar. |
 | `/app/metodos` | Como sorteamos, em linguagem de cliente: o método recomendado, os outros um clique depois, prós e contras e o ajuste pelo Censo. |
-| `/fontes` | Todas as fontes de dados, de método e de mercado, e a lista do que é suposição. Vem de `src/data/sources.ts`. |
+| `/fontes` | Todas as fontes de dados, de método e de mercado, e a lista do que é suposição. Vem de `src/mundo/sources.ts`. |
 | `/avancado` | Página da apresentação: uma seção por método (AAS, estratificada com três alocações, sistemática, HT), a comparação por EPA, o viés de cobertura e o laboratório livre. |
 
-Tudo o que a demo mostra sai de `src/data/study-plan.ts`: `STUDY` (estratos, alocação, n, confiança, semente) e `ANALYSIS` (repetições e perguntas da comparação). Mude ali e as páginas acompanham.
+Tudo o que a demo mostra sai de `src/sampling/study-plan.ts`: `STUDY` (estratos, alocação, n, confiança, semente) e `ANALYSIS` (repetições e perguntas da comparação). Mude ali e as páginas acompanham.
 
 ## Posicionamento frente a concorrentes reais
 
@@ -50,10 +50,12 @@ src/estatistica/
   motor.test.ts   exemplos resolvidos das Partes I a IV como gabarito
 ```
 
+A base simulada (municípios e setores do IBGE, mercados, produtos e o gerador de cadastros e listas) fica toda em `src/mundo/`. Para trabalhar nas contas não é preciso abrir essa pasta.
+
 O resto do app só monta entradas e lê saídas. `src/sampling/` recebe o motor como parâmetro (injeção simples, sem container):
 
 - `simulation.ts`: transforma a base em `Nh`, valores `y` e índices; pede ao motor sorteio, alocação e estimativa; compara com o parâmetro real.
-- `study.ts`: o estudo entregue ao cliente (plano em `src/data/study-plan.ts`): uma amostra AES de 1.500 usuários, com estratos = região intermediária × faixa de renda (24 estratos) e alocação proporcional, reaproveitada para todas as variáveis.
+- `study.ts`: o estudo entregue ao cliente (plano em `src/sampling/study-plan.ts`): uma amostra AES de 1.500 usuários, com estratos = região intermediária × faixa de renda (24 estratos) e alocação proporcional, reaproveitada para todas as variáveis.
 - `methods.ts`: roda AAS, AES (proporcional, Neyman, igual) e sistemática com o mesmo n, nas três perguntas de `ANALYSIS`. Ordena os métodos pela variância exata do plano (conhecida porque a base é sintética) e mostra as repetições para comparar. A recomendação é o menor EPA médio: a proporcional (cerca de 0,89 da AAS). Neyman ganha só na pergunta usada para alocar (Café Reserva) e perde nas outras, e um teste garante que o estudo usa o método recomendado.
 - `coverage.ts`: viés de cobertura. O peso 1/π do HT corrige chances que o plano cria; não corrige quem instalou o app. O ajuste usa células região × porte da cidade com pesos do Censo (média de Hájek com `motor.ht.total` em cada célula). No Café Reserva e na compra do mês corrige perto de 40% da diferença; no gasto por compra passa do ponto. O resto vem de comportamentos que o Censo não mede.
 - `variables.ts`: o que se mede em um consumidor (y) e como formar estratos.
@@ -73,18 +75,18 @@ A demo cobre só o **Rio Grande do Sul** (497 municípios), para cada cidade ter
 
 | Camada | Origem | Arquivo |
 | --- | --- | --- |
-| Municípios do RS, região geográfica intermediária, centroide | IBGE (malha municipal e localidades) | `src/data/ibge/municipalities.json` |
+| Municípios do RS, região geográfica intermediária, centroide | IBGE (malha municipal e localidades) | `src/mundo/ibge/municipalities.json` |
 | População 2022 | Censo, SIDRA tabela 4709 | idem |
 | PIB per capita 2023 | PIB dos Municípios, SIDRA tabela 5938 | idem |
 | Valor adicionado por atividade 2021 (agropecuária, indústria, serviços, administração pública) | PIB dos Municípios, SIDRA tabela 5938 (2022 e 2023 ainda sem abertura) | idem |
 | População urbana e rural 2022 | Censo, SIDRA tabela 9923 | idem |
 | Malha do RS para o mapa | IBGE, TopoJSON qualidade máxima | `public/geo/rs-municipios.topo.json` |
-| Bairros sintéticos (até 40 pontos por município, dentro do contorno) | sorteados no build | `src/data/ibge/municipalities.json` |
-| Grade de pontos do Brasil (landing) | IBGE, malha nacional e Censo | `src/data/ibge/brazil-dots.json` |
-| 3.371 mercados do RS (posição, nome, tipo) | © OpenStreetMap contributors, ODbL, via Overpass | `src/data/osm/stores.json` |
-| Cadastros e listas do app | sintético, semente fixa | `src/gerador/` (registrado em `src/data/population.ts`) |
+| 25.228 setores censitários com domicílios: um ponto dentro do setor, domicílios ocupados e situação urbana/rural | Censo 2022, agregados por setores (malha com atributos) | `src/mundo/ibge/setores.json` |
+| Grade de pontos do Brasil (landing) | IBGE, malha nacional e Censo | `src/mundo/ibge/brazil-dots.json` |
+| 3.371 mercados do RS (posição, nome, tipo) | © OpenStreetMap contributors, ODbL, via Overpass | `src/mundo/osm/stores.json` |
+| Cadastros e listas do app | sintético, semente fixa | `src/mundo/gerador/` (registrado em `src/mundo/population.ts`) |
 
-A lista completa, com links, está em `/fontes` (`src/data/sources.ts`). `pnpm data:ibge` baixa os dados do RS de novo; `pnpm data:dots` refaz a grade do Brasil; `pnpm data:stores` baixa os mercados do OpenStreetMap.
+A lista completa, com links, está em `/fontes` (`src/mundo/sources.ts`). `pnpm data:ibge` baixa os dados do RS de novo; `pnpm data:dots` refaz a grade do Brasil; `pnpm data:stores` baixa os mercados do OpenStreetMap; `pnpm data:setores` baixa a malha de setores do Censo (55 MB, guardada em `.cache/`, fora do git) e resume em `setores.json`.
 
 Os mercados são lojas reais: 188 atacarejos (tag `shop=wholesale` ou nome de rede de atacarejo, como Atacadão e Stok Center), 2.131 supermercados e 1.052 mercadinhos e lojas de conveniência. A atividade das listas ligada a elas é sintética, então a demo mostra resultados por tipo de loja e nunca por rede; o nome só aparece como rótulo no mapa e nos exemplos de listas.
 
@@ -92,12 +94,12 @@ Os mercados são lojas reais: 188 atacarejos (tag `shop=wholesale` ou nome de re
 
 - **RS (população):** 100 mil domicílios sintéticos, um modelo em escala do estado distribuído pelos municípios conforme o Censo. Só serve para medir o viés de cobertura.
 - **Dados do app:** os cerca de 60 mil domicílios que usam o Cestinha e as cerca de 390 mil listas deles no trimestre (1º de agosto a 29 de outubro de 2026). Cada lista tem dia, valor, o mercado onde vai ser comprada e, para cada categoria acompanhada, a linha listada (Reserva, Clássico ou outra marca) e a quantidade.
-- **Cadastro (marco amostral):** uma linha por usuário, montada a partir das listas por `src/gerador/consolidar.ts`. Não é o RS: o app tem mais gente de Porto Alegre, das cidades ricas e jovem.
+- **Cadastro (marco amostral):** uma linha por usuário, montada a partir das listas por `src/mundo/gerador/consolidar.ts`. Não é o RS: o app tem mais gente de Porto Alegre, das cidades ricas e jovem.
 - **Amostra:** os consumidores sorteados pelo plano. Cada um tem π e w = 1/π.
 - **Listas:** observações. A unidade amostral é o consumidor, não a lista.
-- **Cliente B2B:** a Serra Azul Alimentos, fictícia, com uma linha premium (Reserva) e uma de preço acessível (Clássico) em cada categoria (`src/data/products.ts`).
+- **Cliente B2B:** a Serra Azul Alimentos, fictícia, com uma linha premium (Reserva) e uma de preço acessível (Clássico) em cada categoria (`src/mundo/products.ts`).
 
-### Como os dados do app são gerados (`src/gerador/`)
+### Como os dados do app são gerados (`src/mundo/gerador/`)
 
 O gerador é o segundo "motor" do projeto: separado do resto, para dar para apresentar como a base foi feita.
 
@@ -110,7 +112,7 @@ const { cadastros, listas } = new GeradorDePopulacao({ semente: 20_260_901, tama
 const consumidores = consolidar(cadastros, listas);
 ```
 
-Um comportamento (`src/gerador/tipos.ts`) é um tipo de consumidor com:
+Um comportamento (`src/mundo/gerador/tipos.ts`) é um tipo de consumidor com:
 
 - `peso(contexto)`: chance relativa de aparecer, dado município, zona urbana/rural, renda da cidade e peso da agropecuária;
 - uma função por atributo, chamadas nesta ordem: `moradores`, `salario`, `escolaridade`, `idade`, `frequencia`, `tamanhoDaCompra`. Cada uma recebe um objeto de sorteio (`logNormal`, `poisson`, `categorica`...) e os atributos já sorteados, então o valor da compra pode depender do tamanho da família, por exemplo;
@@ -121,13 +123,13 @@ Um comportamento (`src/gerador/tipos.ts`) é um tipo de consumidor com:
 Para cada domicílio, o gerador sorteia, em ordem:
 
 1. Município do RS, com chance proporcional à população do Censo.
-2. Zona rural, com a parcela rural do próprio município no Censo 2022 (12,5% no RS).
+2. Setor censitário do município, com chance proporcional aos domicílios ocupados do Censo 2022. O setor dá o endereço e a zona (12,0% dos domicílios do RS estão em setores rurais).
 3. Comportamento, com chance proporcional a `peso(contexto)` de cada comportamento registrado. O contexto traz dados do IBGE: porte, zona, PIB per capita da cidade e o peso da agropecuária no PIB dela. A família rural, por exemplo, pesa `2 + 8 × agro` na zona rural.
 4. Os atributos do cadastro, chamando as funções do comportamento. A faixa de renda (alta 25%, média 35%, baixa 40%) sai dos quantis da renda no RS inteiro.
 5. Se usa o app: logística de 0,45 + porte (capital +0,8; 100 mil+ +0,4; menores −0,3) + 0,3 × renda da cidade + `afinidadeComApp`. Dá cerca de 60% dos domicílios.
 6. A marca de sempre em cada categoria (afinidade do comportamento + efeito da renda + bônus da capital).
-7. As listas do trimestre: uma a cada 7, 14 ou 30 dias conforme o hábito, com variação e 12% de idas puladas. Cada lista vai para um tipo de mercado sorteado por `tiposDeLoja` e, dentro do tipo, para a loja mais próxima do bairro da pessoa. Cada categoria entra com uma chance que cresce com o tamanho da lista; a marca é a de sempre em 80% das vezes; a quantidade cresce com o número de moradores. O valor é o resto da compra (`tamanhoDaCompra`) mais os itens acompanhados, a preço de tabela.
-8. O endereço: em torno de um bairro sintético dentro do município, com renda alta mais perto do centro e zona rural nos bairros de fora.
+7. As listas do trimestre: uma a cada 7, 14 ou 30 dias conforme o hábito, com variação e 12% de idas puladas. Cada lista vai para um tipo de mercado sorteado por `tiposDeLoja` e, dentro do tipo, para a loja mais próxima do setor da pessoa. Cada categoria entra com uma chance que cresce com o tamanho da lista; a marca é a de sempre em 80% das vezes; a quantidade cresce com o número de moradores. O valor é o resto da compra (`tamanhoDaCompra`) mais os itens acompanhados, a preço de tabela.
+8. O endereço: um ponto ao redor do centro do setor sorteado, sem sair dele.
 
 `consolidar` faz o papel do time de dados: ticket = média do valor das listas; gasto por mês = total do trimestre / 3; hábito observado pela quantidade de listas (até 4 = compra do mês, até 8 = quinzenal, acima = semanal); "listou Café Reserva" = alguma lista do trimestre teve o item; "planejou lista para atacarejo" = alguma lista apontou para um atacarejo; mercado principal = a loja que mais aparece nas listas. A apresentação mostra, para um usuário, as listas e a linha que sai delas. Quem não usa o app também ganha listas: elas definem o valor real do RS.
 

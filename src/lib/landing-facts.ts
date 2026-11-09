@@ -1,8 +1,8 @@
 import { motorReferencia } from "@/estatistica/referencia";
-import { MUNICIPALITIES } from "@/data/geography";
-import { getPopulation } from "@/data/population";
-import { STORE_TYPES, type StoreType } from "@/data/stores";
-import { STUDY } from "@/data/study-plan";
+import { MUNICIPALITIES } from "@/mundo/geography";
+import { getPopulation } from "@/mundo/population";
+import { STORE_TYPES, type StoreType } from "@/mundo/stores";
+import { STUDY } from "@/sampling/study-plan";
 import { runStudy } from "@/sampling/study";
 
 /** Store-listing download tiers. The listing shows the largest tier that installs (active or not) have passed. */

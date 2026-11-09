@@ -45,5 +45,5 @@ for (let lon = -74; lon <= -34; lon += STEP) {
   }
 }
 
-await writeFile("src/data/ibge/brazil-dots.json", JSON.stringify(dots));
+await writeFile("src/mundo/ibge/brazil-dots.json", JSON.stringify(dots));
 console.log(`${dots.length} pontos`);

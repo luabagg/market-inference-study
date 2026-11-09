@@ -5,10 +5,10 @@
  * (unidades). Este passo junta as listas de cada pessoa ao seu cadastro e
  * calcula as variáveis que os estudos medem.
  */
-import { MUNICIPALITIES } from "@/data/geography";
-import type { Consumer } from "@/data/population";
-import { PRODUCTS } from "@/data/products";
-import { STORES } from "@/data/stores";
+import { MUNICIPALITIES } from "@/mundo/geography";
+import type { Consumer } from "@/mundo/population";
+import { PRODUCTS } from "@/mundo/products";
+import { STORES } from "@/mundo/stores";
 import type { Cadastro, Frequencia, TabelaDeListas } from "./tipos";
 
 const DIAS_NO_TRIMESTRE = 90;

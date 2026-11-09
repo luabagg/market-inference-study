@@ -3,7 +3,7 @@ import { AppListing } from "@/components/landing/app-listing";
 import { HeroMap } from "@/components/landing/hero-map";
 import { LiveCounter } from "@/components/landing/live-counter";
 import { Logo } from "@/components/logo";
-import { IBGE_YEARS } from "@/data/geography";
+import { IBGE_YEARS } from "@/mundo/geography";
 import { brl, compact, int, pct, pp } from "@/lib/format";
 import { getLandingFacts } from "@/lib/landing-facts";
 

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ORGANIZATION, PRODUCTS, type ProductId, productById } from "@/data/products";
-import { STORE_ATTRIBUTION } from "@/data/stores";
-import { STUDY } from "@/data/study-plan";
+import { ORGANIZATION, PRODUCTS, type ProductId, productById } from "@/mundo/products";
+import { STORE_ATTRIBUTION } from "@/mundo/stores";
+import { STUDY } from "@/sampling/study-plan";
 import type { DashboardData, Figure, FigureRow } from "@/lib/analysis";
 import { brl, int, num, pct } from "@/lib/format";
 import { EstimateBars, Panel } from "./ui";

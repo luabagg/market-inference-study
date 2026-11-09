@@ -7,9 +7,9 @@
  * estimate over that subset of strata (no domain estimation needed).
  */
 import type { EstimativaEstratificada, MotorAmostragem, Rng } from "@/estatistica";
-import type { Consumer } from "@/data/population";
-import type { StudyPlan } from "@/data/study-plan";
-import { seededRng } from "@/data/random";
+import type { Consumer } from "@/mundo/population";
+import type { StudyPlan } from "@/sampling/study-plan";
+import { seededRng } from "@/lib/random";
 import { compareKeys, STRATIFIERS, buildStrata, variable, type VariableId } from "./variables";
 
 export type GroupEstimate = { key: string; label: string; estimate: EstimativaEstratificada; truth: number };

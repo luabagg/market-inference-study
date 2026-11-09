@@ -15,10 +15,10 @@
  * differ in habits the Census does not see, and that part stays.
  */
 import type { MotorAmostragem } from "@/estatistica";
-import { CITY_SIZES, type CitySize, MUNICIPALITIES, REGIONS, STATE_POPULATION } from "@/data/geography";
-import { AGES, type Consumer, INCOME_BANDS, ZONES } from "@/data/population";
-import { seededRng } from "@/data/random";
-import type { StudyPlan } from "@/data/study-plan";
+import { CITY_SIZES, type CitySize, MUNICIPALITIES, REGIONS, STATE_POPULATION } from "@/mundo/geography";
+import { AGES, type Consumer, INCOME_BANDS, ZONES } from "@/mundo/population";
+import { seededRng } from "@/lib/random";
+import type { StudyPlan } from "@/sampling/study-plan";
 import { designStudy } from "./study";
 import { compareKeys, variable, type VariableId } from "./variables";
 

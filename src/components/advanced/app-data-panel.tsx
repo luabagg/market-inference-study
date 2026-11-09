@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { MUNICIPALITIES } from "@/data/geography";
-import { BEHAVIORS, EDUCATION, FREQUENCIES, getAppData, INCOME_BANDS, ZONES } from "@/data/population";
-import { PRODUCTS, skuName, type Tier } from "@/data/products";
-import { distanceKm, STORE_TYPES, STORES } from "@/data/stores";
+import { MUNICIPALITIES } from "@/mundo/geography";
+import { BEHAVIORS, EDUCATION, FREQUENCIES, getAppData, INCOME_BANDS, ZONES } from "@/mundo/population";
+import { PRODUCTS, skuName, type Tier } from "@/mundo/products";
+import { distanceKm, STORE_TYPES, STORES } from "@/mundo/stores";
 import { brl, brlExact, int, num } from "@/lib/format";
 import { Panel } from "@/components/app/ui";
 

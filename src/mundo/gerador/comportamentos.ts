@@ -2,7 +2,7 @@
  * Os seis comportamentos que formam a base sintética. Os valores são
  * suposições plausíveis para o Brasil de 2026, não estimativas oficiais.
  * Para criar um novo, copie um objeto, mude os números e registre com
- * `gerador.adicionarComportamento(...)` em `src/data/population.ts`.
+ * `gerador.adicionarComportamento(...)` em `src/mundo/population.ts`.
  */
 import type { Comportamento } from "./tipos";
 

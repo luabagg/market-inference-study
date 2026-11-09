@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { motor } from "@/estatistica";
-import { MUNICIPALITIES } from "@/data/geography";
-import { AGES, getPopulation, INCOME_BANDS } from "@/data/population";
-import { distanceKm, STORE_ATTRIBUTION, STORE_TYPES, STORES, type StoreType } from "@/data/stores";
-import { STUDY } from "@/data/study-plan";
+import { MUNICIPALITIES } from "@/mundo/geography";
+import { AGES, getPopulation, INCOME_BANDS } from "@/mundo/population";
+import { distanceKm, STORE_ATTRIBUTION, STORE_TYPES, STORES, type StoreType } from "@/mundo/stores";
+import { STUDY } from "@/sampling/study-plan";
 import { int, num } from "@/lib/format";
 import { runStudy } from "@/sampling/study";
 import { BASEMAP_LABELS, type Basemap, BrazilCanvas, basemapLegend, type SampledPoint, STORE_COLORS } from "./brazil-canvas";

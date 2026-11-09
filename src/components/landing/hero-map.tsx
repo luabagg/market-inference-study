@@ -2,7 +2,7 @@
 
 import { geoMercator } from "d3-geo";
 import { useEffect, useRef } from "react";
-import dots from "@/data/ibge/brazil-dots.json";
+import dots from "@/mundo/ibge/brazil-dots.json";
 
 type Pulse = { dot: number; born: number };
 

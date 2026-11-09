@@ -12,8 +12,8 @@
  * that wins a single question.
  */
 import type { MotorAmostragem } from "@/estatistica";
-import type { Consumer } from "@/data/population";
-import type { StudyPlan } from "@/data/study-plan";
+import type { Consumer } from "@/mundo/population";
+import type { StudyPlan } from "@/sampling/study-plan";
 import { type Design, prepareSimulation, repeat } from "./simulation";
 import { variable, type VariableId } from "./variables";
 

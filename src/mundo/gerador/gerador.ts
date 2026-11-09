@@ -8,7 +8,8 @@
  *
  * Para cada domicílio, em ordem:
  *   1. município do RS, com chance proporcional à população do Censo;
- *   2. zona urbana ou rural, com a parcela rural do município no Censo 2022;
+ *   2. setor censitário do município, com chance proporcional aos domicílios do
+ *      Censo 2022; o setor dá o endereço e diz se a casa é urbana ou rural;
  *   3. comportamento, com chance proporcional a `peso(contexto)` de cada um;
  *   4. atributos do cadastro, chamando as funções do comportamento;
  *   5. se usa o app: chance maior na capital, em cidades mais ricas e para quem
@@ -25,11 +26,12 @@
  * (ticket, frequência, "listou a linha premium") é `consolidar.ts`, como faria o
  * time de dados com os registros que chegam do app.
  */
-import { type CitySize, MUNICIPALITIES } from "@/data/geography";
-import type { IncomeBand } from "@/data/population";
-import { PRODUCTS, type Tier, skuPrice } from "@/data/products";
-import { logistic, normal, pickWeighted, seededRng } from "@/data/random";
-import { nearestStore, type StoreType } from "@/data/stores";
+import { type CitySize, MUNICIPALITIES } from "@/mundo/geography";
+import type { IncomeBand } from "@/mundo/population";
+import { PRODUCTS, type Tier, skuPrice } from "@/mundo/products";
+import { logistic, normal, pickWeighted, seededRng } from "@/lib/random";
+import { TRACTS, type Tract } from "@/mundo/setores";
+import { nearestStore, type StoreType } from "@/mundo/stores";
 import type { Rng } from "@/estatistica";
 import type { Cadastro, Comportamento, Contexto, Frequencia, Sorteio, TabelaDeListas, Zona } from "./tipos";
 
@@ -93,12 +95,19 @@ export class GeradorDePopulacao {
     const logPib = MUNICIPALITIES.map((m) => Math.log(m.gdpPerCapita));
     const mediaPib = logPib.reduce((a, b) => a + b, 0) / logPib.length;
     const desvioPib = Math.sqrt(logPib.reduce((a, b) => a + (b - mediaPib) ** 2, 0) / logPib.length);
+    const acumuladoSetores = TRACTS.map((setores) => {
+      const acumulado = new Float64Array(setores.length);
+      setores.reduce((acc, s, i) => (acumulado[i] = acc + s.households), 0);
+      return acumulado;
+    });
 
     // 1ª passada: quem é cada pessoa (contexto, comportamento, atributos e marca de sempre).
     const pessoas = Array.from({ length: this.opcoes.tamanho }, (_, id) => {
       const indice = pickWeighted(acumulado, rng);
       const municipio = MUNICIPALITIES[indice];
-      const zona: Zona = r.chance(municipio.ruralShare) ? "rural" : "urbana";
+      // Setor censitário pelo número de domicílios do Censo; ele diz se a casa é urbana ou rural.
+      const setor = pickWeighted(acumuladoSetores[indice], rng);
+      const zona: Zona = TRACTS[indice][setor].rural ? "rural" : "urbana";
       const ctx: Contexto = {
         municipio,
         zona,
@@ -131,7 +140,7 @@ export class GeradorDePopulacao {
       });
       const marcaDeSempre = chances.map((c) => escolherMarca(c, rng()));
 
-      return { id, indice, ctx, comportamento, pessoa, usaOApp, chances, marcaDeSempre, posicao: [rng(), Math.abs(normal(rng))] as const };
+      return { id, indice, setor, ctx, comportamento, pessoa, usaOApp, chances, marcaDeSempre, posicao: [rng(), Math.abs(normal(rng))] as const };
     });
 
     // Faixa de renda: 40% baixa, 35% média, 25% alta, pelos quantis do RS inteiro (não só de quem usa o app).
@@ -144,8 +153,8 @@ export class GeradorDePopulacao {
 
     const cadastros = pessoas.map((p): Cadastro => {
       const faixaDeRenda: IncomeBand = p.pessoa.salario >= corteAlta ? "alta" : p.pessoa.salario >= corteBaixa ? "media" : "baixa";
-      const { lon, lat, bairro } = endereco(p.ctx, faixaDeRenda, p.posicao[0], p.posicao[1]);
-      const lojaMaisProxima = lojasDoBairro(p.indice, bairro, p.ctx);
+      const { lon, lat } = endereco(TRACTS[p.indice][p.setor], p.posicao[0], p.posicao[1]);
+      const lojaMaisProxima = lojasDoSetor(p.indice, p.setor);
       // Tabela acumulada dos pesos de loja, montada uma vez por pessoa (o sorteio roda em cada lista).
       const pesosDeLoja = p.comportamento.tiposDeLoja(p.ctx, p.pessoa);
       const acumuladoLojas = new Float64Array(TIPOS_DE_LOJA.length);
@@ -213,13 +222,13 @@ export class GeradorDePopulacao {
 
 const TIPOS_DE_LOJA: StoreType[] = ["atacarejo", "supermercado", "mercadinho"];
 
-// Mercado mais próximo de cada tipo, calculado uma vez por bairro sintético (todos os vizinhos usam os mesmos).
+// Mercado mais próximo de cada tipo, calculado uma vez por setor (todos os vizinhos usam os mesmos).
 const cacheDeLojas = new Map<string, Record<StoreType, number>>();
-const lojasDoBairro = (municipio: number, bairro: number, ctx: Contexto) => {
-  const chave = `${municipio}:${bairro}`;
+const lojasDoSetor = (municipio: number, setor: number) => {
+  const chave = `${municipio}:${setor}`;
   const emCache = cacheDeLojas.get(chave);
   if (emCache) return emCache;
-  const [lon, lat] = ctx.municipio.neighborhoods[bairro];
+  const { lon, lat } = TRACTS[municipio][setor];
   const lojas = Object.fromEntries(TIPOS_DE_LOJA.map((tipo) => [tipo, nearestStore(lon, lat, tipo)])) as Record<StoreType, number>;
   cacheDeLojas.set(chave, lojas);
   return lojas;
@@ -228,21 +237,12 @@ const lojasDoBairro = (municipio: number, bairro: number, ctx: Contexto) => {
 const escolherMarca = (c: { premium: number; popular: number }, sorte: number): Tier =>
   sorte < c.premium ? "premium" : sorte < c.premium + c.popular ? "popular" : "outra";
 
-/**
- * Endereço dentro do município: em torno de um dos bairros sintéticos (todos
- * dentro do contorno do IBGE, do centro para fora). Renda alta puxa para o
- * centro; zona rural vai para os bairros mais afastados.
- */
-const endereco = (ctx: Contexto, renda: IncomeBand, u: number, espalhamento: number) => {
-  const bairros = ctx.municipio.neighborhoods;
-  const inclinacao = ctx.zona === "rural" ? 0.35 : renda === "alta" ? 1.8 : renda === "baixa" ? 0.7 : 1;
-  const bairro = Math.min(bairros.length - 1, Math.floor(u ** inclinacao * bairros.length));
-  const [lon, lat, raio] = bairros[bairro];
+/** Endereço: um ponto ao redor do centro do setor, sem sair dele. */
+const endereco = (setor: Tract, u: number, espalhamento: number) => {
   const angulo = 2 * Math.PI * ((u * 7919) % 1);
-  const distancia = raio * Math.min(1, espalhamento / 2.5);
+  const distancia = setor.radius * Math.min(1, espalhamento / 2.5);
   return {
-    lon: lon + (Math.cos(angulo) * distancia) / Math.cos((lat * Math.PI) / 180),
-    lat: lat + Math.sin(angulo) * distancia,
-    bairro,
+    lon: setor.lon + (Math.cos(angulo) * distancia) / Math.cos((setor.lat * Math.PI) / 180),
+    lat: setor.lat + Math.sin(angulo) * distancia,
   };
 };

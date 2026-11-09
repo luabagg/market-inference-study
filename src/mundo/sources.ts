@@ -27,7 +27,14 @@ export const DATA_SOURCES: Source[] = [
     publisher: "IBGE",
     detail: "SIDRA, tabela 9923, urbana e rural, por município",
     url: "https://sidra.ibge.gov.br/tabela/9923",
-    usedFor: "Chance de um domicílio do modelo estar na zona rural, cidade a cidade.",
+    usedFor: "População rural de cada município no mapa e no painel da economia.",
+  },
+  {
+    name: "Censo Demográfico 2022: agregados por setores censitários",
+    publisher: "IBGE",
+    detail: "Malha de setores do RS com atributos (GeoPackage), domicílios particulares ocupados (V0007) e situação urbana/rural",
+    url: "https://ftp.ibge.gov.br/Censos/Censo_Demografico_2022/Agregados_por_Setores_Censitarios/malha_com_atributos/setores/gpkg/UF/RS/",
+    usedFor: "Onde cada domicílio do modelo mora: o setor é sorteado pelo número de domicílios e diz se a casa é urbana ou rural.",
   },
   {
     name: `PIB dos Municípios: PIB ${IBGE_YEARS.gdp}`,
@@ -48,7 +55,7 @@ export const DATA_SOURCES: Source[] = [
     publisher: "IBGE",
     detail: "API de malhas v3: RS em qualidade máxima e Brasil em qualidade mínima",
     url: "https://servicodados.ibge.gov.br/api/docs/malhas?versao=3",
-    usedFor: "Contorno dos municípios nos mapas, bairros sintéticos dentro de cada cidade e o mapa de pontos do Brasil.",
+    usedFor: "Contorno dos municípios nos mapas, e o mapa de pontos do Brasil.",
   },
   {
     name: "Localidades: regiões geográficas intermediárias",
@@ -102,10 +109,10 @@ export const MARKET_SOURCES: Source[] = [
 
 /** What is invented. Shown next to the sources so nobody mistakes it for data. */
 export const ASSUMPTIONS: { what: string; where: string }[] = [
-  { what: "A Fração, o app Cestinha, a Serra Azul Alimentos, seus produtos e preços", where: "src/data/products.ts" },
-  { what: "Os seis comportamentos de consumo: tamanho da casa, renda, escolaridade, idade, hábito de compra e marcas", where: "src/gerador/comportamentos.ts" },
-  { what: "Quem usa o app: chance maior na capital, em cidades mais ricas e para alguns comportamentos", where: "src/gerador/gerador.ts" },
-  { what: "Todas as listas de compras e o que tem nelas", where: "src/gerador/gerador.ts" },
+  { what: "A Fração, o app Cestinha, a Serra Azul Alimentos, seus produtos e preços", where: "src/mundo/products.ts" },
+  { what: "Os seis comportamentos de consumo: tamanho da casa, renda, escolaridade, idade, hábito de compra e marcas", where: "src/mundo/gerador/comportamentos.ts" },
+  { what: "Quem usa o app: chance maior na capital, em cidades mais ricas e para alguns comportamentos", where: "src/mundo/gerador/gerador.ts" },
+  { what: "Todas as listas de compras e o que tem nelas", where: "src/mundo/gerador/gerador.ts" },
   { what: "Idade, renda e zona do RS no painel “Quem usa o Cestinha” (só “Onde moram” vem do Censo)", where: "src/sampling/coverage.ts" },
   { what: "Downloads, avaliação e número de avaliações do app na landing page", where: "src/lib/landing-facts.ts" },
 ];

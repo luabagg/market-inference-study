@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { BASEMAP_LABELS, type Basemap, BrazilCanvas, basemapLegend } from "@/components/app/brazil-canvas";
 import { Panel, Segmented } from "@/components/app/ui";
-import { IBGE_YEARS, MUNICIPALITIES, type Sector, SECTORS, STATE_POPULATION } from "@/data/geography";
+import { IBGE_YEARS, MUNICIPALITIES, type Sector, SECTORS, STATE_POPULATION } from "@/mundo/geography";
 import { brl, int, num, pct } from "@/lib/format";
 
 const SECTOR_COLORS: Record<Sector, string> = {
@@ -111,7 +111,7 @@ export function EconomyPanel() {
 
           <div className="rounded-lg bg-canvas p-3 text-[13px] leading-relaxed text-slate">
             <span className="font-medium text-ink">Como isso entra no gerador. </span>
-            Cada domicílio cai num município pela população do Censo e na zona rural com a parcela rural daquele município. A família
+            Cada domicílio cai num município pela população do Censo e, dentro dele, num setor censitário pelo número de domicílios. O setor diz se a casa é urbana ou rural. A família
             rural aparece mais onde a agropecuária pesa no PIB, e a renda de todos os perfis sobe com o PIB per capita da cidade.
           </div>
         </div>

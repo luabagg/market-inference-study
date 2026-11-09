@@ -3,11 +3,11 @@
  * strata. This file turns domain objects into the plain numbers and keys the
  * statistics engine expects.
  */
-import { CITY_SIZES, type CitySize, REGIONS, type RegionCode } from "@/data/geography";
-import { BEHAVIORS, type Consumer, EDUCATION, INCOME_BANDS, type IncomeBand, ZONES } from "@/data/population";
-import type { Escolaridade, Zona } from "@/gerador/tipos";
-import { PRODUCTS, type ProductId, productById, skuName, type Tier } from "@/data/products";
-import { STORE_TYPES, type StoreType } from "@/data/stores";
+import { CITY_SIZES, type CitySize, REGIONS, type RegionCode } from "@/mundo/geography";
+import { BEHAVIORS, type Consumer, EDUCATION, INCOME_BANDS, type IncomeBand, ZONES } from "@/mundo/population";
+import type { Escolaridade, Zona } from "@/mundo/gerador/tipos";
+import { PRODUCTS, type ProductId, productById, skuName, type Tier } from "@/mundo/products";
+import { STORE_TYPES, type StoreType } from "@/mundo/stores";
 
 export type VariableId =
   | "ticket"

@@ -4,9 +4,9 @@ import { geoMercator, geoPath, type GeoProjection } from "d3-geo";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { feature, mesh } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
-import { MUNICIPALITIES, type Municipality } from "@/data/geography";
-import type { Consumer } from "@/data/population";
-import { STORE_TYPES, STORES, type StoreType } from "@/data/stores";
+import { MUNICIPALITIES, type Municipality } from "@/mundo/geography";
+import type { Consumer } from "@/mundo/population";
+import { STORE_TYPES, STORES, type StoreType } from "@/mundo/stores";
 import { brl, int, pct } from "@/lib/format";
 
 export const STRATUM_COLORS = ["#0a7c5a", "#2f6fde", "#e2873a", "#9a4fc4", "#d64575", "#1f9fb4", "#a07a10", "#5b6b7f"];

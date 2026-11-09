@@ -7,9 +7,9 @@
  * comportamento naquele contexto. Depois chama as funções do comportamento,
  * na ordem em que aparecem abaixo, para sortear os atributos.
  */
-import type { Municipality } from "@/data/geography";
-import type { IncomeBand } from "@/data/population";
-import type { StoreType } from "@/data/stores";
+import type { Municipality } from "@/mundo/geography";
+import type { IncomeBand } from "@/mundo/population";
+import type { StoreType } from "@/mundo/stores";
 
 export type Zona = "urbana" | "rural";
 export type Escolaridade = "fundamental" | "medio" | "superior";

@@ -2,8 +2,8 @@
 // design-based properties the course proves: unbiasedness and ~95% coverage.
 import { describe, expect, test } from "vitest";
 import { motor } from "@/estatistica";
-import { getPopulation } from "@/data/population";
-import { STUDY } from "@/data/study-plan";
+import { getPopulation } from "@/mundo/population";
+import { STUDY } from "@/sampling/study-plan";
 import { type Design, prepareSimulation, repeat } from "./simulation";
 import { runStudy } from "./study";
 

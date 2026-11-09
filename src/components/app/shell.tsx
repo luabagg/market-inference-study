@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "@/components/logo";
-import { STATE_NAME } from "@/data/geography";
-import { ORGANIZATION } from "@/data/products";
-import { STUDY } from "@/data/study-plan";
+import { STATE_NAME } from "@/mundo/geography";
+import { ORGANIZATION } from "@/mundo/products";
+import { STUDY } from "@/sampling/study-plan";
 
 const NAV = [
   { href: "/app", label: "Resultados", icon: "M3 13h4v8H3zM10 8h4v13h-4zM17 3h4v18h-4z" },

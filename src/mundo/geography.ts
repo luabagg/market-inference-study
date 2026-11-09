@@ -22,8 +22,6 @@ export type Municipality = {
   agroShare: number;
   lon: number;
   lat: number;
-  /** Synthetic neighborhood centers inside the IBGE outline: [lon, lat, max scatter radius in degrees]. */
-  neighborhoods: [number, number, number][];
   size: CitySize;
 };
 
@@ -51,7 +49,6 @@ export const MUNICIPALITIES: Municipality[] = ibge.municipalities
   .map((m) => ({
     ...m,
     agroShare: m.valueAdded.agro / Object.values(m.valueAdded).reduce((a, b) => a + b, 0),
-    neighborhoods: m.neighborhoods as [number, number, number][],
     size: m.capital ? "capital" : m.population >= 100_000 ? "grande" : "pequeno",
   }));
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { PRODUCTS } from "@/data/products";
-import { STORES } from "@/data/stores";
+import { PRODUCTS } from "@/mundo/products";
+import { STORES } from "@/mundo/stores";
 import { altaRenda, familiaRural, jovemDeCapital } from "./comportamentos";
 import { consolidar, frequenciaObservada } from "./consolidar";
 import { GeradorDePopulacao } from "./gerador";

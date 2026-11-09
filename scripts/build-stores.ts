@@ -35,7 +35,7 @@ const stores = elements.flatMap((e) => {
   return [[Number(lon.toFixed(5)), Number(lat.toFixed(5)), type, name] as const];
 });
 
-await mkdir("src/data/osm", { recursive: true });
-await writeFile("src/data/osm/stores.json", JSON.stringify({ source: "© OpenStreetMap contributors (ODbL)", stores }));
+await mkdir("src/mundo/osm", { recursive: true });
+await writeFile("src/mundo/osm/stores.json", JSON.stringify({ source: "© OpenStreetMap contributors (ODbL)", stores }));
 const byType = [0, 1, 2].map((t) => stores.filter((s) => s[2] === t).length);
 console.log(`${stores.length} lojas: ${byType[0]} atacarejos, ${byType[1]} supermercados, ${byType[2]} mercadinhos`);

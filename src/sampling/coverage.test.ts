@@ -2,8 +2,8 @@
 // here, the bias and how much the Census adjustment removes can be checked.
 import { describe, expect, test } from "vitest";
 import { motor } from "@/estatistica";
-import { getPopulation, getStatePopulation } from "@/data/population";
-import { ANALYSIS, STUDY } from "@/data/study-plan";
+import { getPopulation, getStatePopulation } from "@/mundo/population";
+import { ANALYSIS, STUDY } from "@/sampling/study-plan";
 import { censusShares, coverageBias } from "./coverage";
 import { compareMethods, recommendedDesign } from "./methods";
 

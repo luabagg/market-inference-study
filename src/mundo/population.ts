@@ -8,7 +8,7 @@
  *   behaviors, the way an app user base would.
  *
  * Real inputs come from IBGE (municipality, population, GDP per capita). The
- * generator in `src/gerador/` simulates what the app records (signups and
+ * generator in `src/mundo/gerador/` simulates what the app records (signups and
  * shopping lists) from the behaviors registered below, and `consolidar` turns
  * those records into one row per household.
  */
@@ -19,10 +19,10 @@ import {
   familiaBaixaRendaUrbana,
   familiaRural,
   jovemDeCapital,
-} from "@/gerador/comportamentos";
-import { consolidar } from "@/gerador/consolidar";
-import { GeradorDePopulacao } from "@/gerador/gerador";
-import type { Cadastro, Escolaridade, FaixaEtaria, Frequencia, TabelaDeListas, Zona } from "@/gerador/tipos";
+} from "@/mundo/gerador/comportamentos";
+import { consolidar } from "@/mundo/gerador/consolidar";
+import { GeradorDePopulacao } from "@/mundo/gerador/gerador";
+import type { Cadastro, Escolaridade, FaixaEtaria, Frequencia, TabelaDeListas, Zona } from "@/mundo/gerador/tipos";
 import type { CitySize, RegionCode } from "./geography";
 import type { ProductId } from "./products";
 import type { StoreType } from "./stores";

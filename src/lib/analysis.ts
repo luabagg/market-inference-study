@@ -4,10 +4,10 @@
  * bias check. Results are memoized per process: the frame and seeds are fixed.
  */
 import { type Estimativa, motor } from "@/estatistica";
-import { getPopulation, getStatePopulation } from "@/data/population";
-import { PRODUCTS, type ProductId } from "@/data/products";
-import { STORE_TYPES, type StoreType } from "@/data/stores";
-import { ANALYSIS, STUDY } from "@/data/study-plan";
+import { getPopulation, getStatePopulation } from "@/mundo/population";
+import { PRODUCTS, type ProductId } from "@/mundo/products";
+import { STORE_TYPES, type StoreType } from "@/mundo/stores";
+import { ANALYSIS, STUDY } from "@/sampling/study-plan";
 import { compareProfiles, coverageBias } from "@/sampling/coverage";
 import { averageEpa, compareMethods, recommendedDesign } from "@/sampling/methods";
 import { type GroupEstimate, runStudy } from "@/sampling/study";

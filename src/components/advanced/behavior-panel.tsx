@@ -1,6 +1,6 @@
 "use client";
 
-import { BEHAVIORS, type Consumer } from "@/data/population";
+import { BEHAVIORS, type Consumer } from "@/mundo/population";
 import { brl, num, pct } from "@/lib/format";
 import { STRATUM_COLORS } from "@/components/app/brazil-canvas";
 import { Panel } from "@/components/app/ui";
@@ -35,7 +35,7 @@ export function BehaviorPanel({ state, frame }: { state: Consumer[]; frame: Cons
       caption={
         <>
           Cada domicílio sintético recebeu um destes perfis, sorteado conforme a cidade e a zona em que mora (
-          <code className="font-mono text-[12px]">src/gerador/comportamentos.ts</code>). O cliente nunca vê esta coluna.
+          <code className="font-mono text-[12px]">src/mundo/gerador/comportamentos.ts</code>). O cliente nunca vê esta coluna.
         </>
       }
     >

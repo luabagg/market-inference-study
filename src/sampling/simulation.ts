@@ -8,8 +8,8 @@
  * estimate.
  */
 import type { Confianca, Estimativa, EstimativaEstratificada, MotorAmostragem, RegraAlocacao, Rng } from "@/estatistica";
-import type { Consumer } from "@/data/population";
-import { seededRng } from "@/data/random";
+import type { Consumer } from "@/mundo/population";
+import { seededRng } from "@/lib/random";
 import { buildStrata, STRATIFIERS, type StratifierId, type Stratum, variable, type VariableId } from "./variables";
 
 export type Design = "aas" | "aes-proporcional" | "aes-igual" | "aes-neyman" | "as";

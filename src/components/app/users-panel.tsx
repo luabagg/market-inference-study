@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { IBGE_YEARS } from "@/data/geography";
+import { IBGE_YEARS } from "@/mundo/geography";
 import type { DashboardData } from "@/lib/analysis";
 import { pct } from "@/lib/format";
 import { Panel } from "./ui";
